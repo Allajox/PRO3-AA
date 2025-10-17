@@ -150,22 +150,6 @@
           </packing>
         </child>
         <child>
-          <object class="GtkComboBoxText" id="IDType">
-            <property name="width-request">150</property>
-            <property name="height-request">35</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <items>
-              <item id="IDUndirected" translatable="yes">Undirected</item>
-              <item translatable="yes">Directed</item>
-            </items>
-          </object>
-          <packing>
-            <property name="x">857</property>
-            <property name="y">280</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkLabel" id="IDGraphType">
             <property name="width-request">120</property>
             <property name="height-request">40</property>
@@ -214,6 +198,23 @@
           <packing>
             <property name="x">879</property>
             <property name="y">163</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkComboBoxText" id="IDType">
+            <property name="width-request">150</property>
+            <property name="height-request">35</property>
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="active">0</property>
+            <items>
+              <item id="0" translatable="yes">Undirected</item>
+              <item id="1" translatable="yes">Directed</item>
+            </items>
+          </object>
+          <packing>
+            <property name="x">857</property>
+            <property name="y">280</property>
           </packing>
         </child>
       </object>
