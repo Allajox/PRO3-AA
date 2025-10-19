@@ -14,7 +14,7 @@ TARGET = hamilton
 SRC_DIR = src
 
 # Archivos fuente
-SRC = $(SRC_DIR)/main.c $(SRC_DIR)/mainglade.c
+SRC = $(SRC_DIR)/logic.c $(SRC_DIR)/mainglade.c
 
 # Regla por defecto
 all: $(TARGET)
