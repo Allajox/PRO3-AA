@@ -1,8 +1,9 @@
 #include<stdio.h>
 
-#define SIZE 5
+#define SIZE 12
 
 typedef struct {
+    int order;
     int graph[SIZE][SIZE];
 } Graph;
 

@@ -4,12 +4,18 @@
 #include "logic.h"
 
 GtkWidget ***entries = NULL;
+int current_size = 0; 
 Graph currentGraph;
 
-void on_window_destroy(GtkWidget *widget, gpointer data) {
-    // Marcar parámetros como no utilizados para evitar warnings
+void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
+    // avoid warnings
     (void)widget;
     (void)data;
+    
+    if (builder) {
+        g_object_unref(builder);
+        builder = NULL;
+    }
     gtk_main_quit();
 }
 
@@ -35,10 +41,89 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
     }
 }
 
+// function to clear all the grid
+void clear_grid(GtkBuilder *builder) {
+    // if there aren't any entries, return
+    if (!entries) 
+        return;
+
+    GtkWidget *grid = GTK_WIDGET(gtk_builder_get_object(builder, "IDGrid"));
+    if (!grid || !GTK_IS_GRID(grid)) return;
+
+    // delete all widgets from the grid
+    GList *children = gtk_container_get_children(GTK_CONTAINER(grid));
+    for (GList *iter = children; iter != NULL; iter = g_list_next(iter))
+        gtk_widget_destroy(GTK_WIDGET(iter->data));
+    
+    g_list_free(children);
+
+    // free memory from the matrix
+    for (int i = 0; i < current_size; i++) 
+        g_free(entries[i]);
+
+    g_free(entries);
+    entries = NULL;
+    current_size = 0;
+}
+
+// function to create and configure entries on the main grid
+void setup_grid(GtkBuilder *builder, int size) {
+    // clear the existing grid if one already exists
+    if (entries)
+        clear_grid(builder);
+
+    // get the main grid
+    GtkWidget *grid = GTK_WIDGET(gtk_builder_get_object(builder, "IDGrid"));
+    if (!grid || !GTK_IS_GRID(grid)) {
+        return;
+    }
+
+    current_size = size;
+    
+    // initialize the matrix with entries
+    entries = g_malloc(size * sizeof(GtkWidget**));
+    for (int i = 0; i < size; i++) {
+        entries[i] = g_malloc(size * sizeof(GtkWidget*));
+    }
+
+    // create entries according to the specified size
+    for (int row = 0; row < size; row++) {
+        for (int col = 0; col < size; col++) {
+            // create new entry
+            GtkWidget *entry = gtk_entry_new();
+            
+            // configure the entrys properties
+            gtk_entry_set_max_length(GTK_ENTRY(entry), 1);
+            gtk_entry_set_width_chars(GTK_ENTRY(entry), 1);
+            gtk_widget_set_size_request(entry, 50, 50);
+            gtk_entry_set_alignment(GTK_ENTRY(entry), 0.5);
+            
+            // configure expansion
+            gtk_widget_set_hexpand(entry, TRUE);
+            gtk_widget_set_vexpand(entry, TRUE);
+            gtk_widget_set_halign(entry, GTK_ALIGN_FILL);
+            gtk_widget_set_valign(entry, GTK_ALIGN_FILL);
+            
+            // connect validation signal
+            g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), NULL);
+            
+            // insert entry to the main grid
+            gtk_grid_attach(GTK_GRID(grid), entry, col, row, 1, 1);
+            
+            // save entry reference
+            entries[row][col] = entry;
+        }
+    }
+    // show the updated the grid
+    gtk_widget_show_all(grid);
+}
+
 // function to load a graph into a binary file
-void on_load_button_clicked(GtkButton *button) {
+void on_load_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     
+    GtkBuilder *builder = (GtkBuilder *)user_data;
+
     // create dialog to load file
     GtkWidget *dialog = gtk_file_chooser_dialog_new("Load Graph",
                                                    GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))),
@@ -60,9 +145,18 @@ void on_load_button_clicked(GtkButton *button) {
         char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         
         if (loadGraph(filename, &currentGraph)) {
-            // update the interface with loaded graph
-            for (int row = 0; row < SIZE; row++) {
-                for (int col = 0; col < SIZE; col++) {
+
+            // update spin button with the loaded order
+            GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+            if (IDSpin)
+                gtk_spin_button_set_value(IDSpin, currentGraph.order);
+            
+            // update matrix on the interface
+            setup_grid(builder, currentGraph.order);
+
+            // update entries
+            for (int row = 0; row < currentGraph.order; row++) {
+                for (int col = 0; col < currentGraph.order; col++) {
                     if (currentGraph.graph[row][col] != 0) {
                         char text[2];
                         snprintf(text, sizeof(text), "%d", currentGraph.graph[row][col]);
@@ -92,11 +186,21 @@ void on_load_button_clicked(GtkButton *button) {
 // function to save a graph into a binary file
 void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
-    (void)user_data;
+
+    GtkBuilder *builder = (GtkBuilder *)user_data;
+    
+    // get current order from spin button
+    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+    int current_order = 0;
+
+    if (IDSpin)
+        current_order = gtk_spin_button_get_value_as_int(IDSpin);
+
+    currentGraph.order = current_order;
     
     // get graph from interface
-    for (int row = 0; row < SIZE; row++) {
-        for (int col = 0; col < SIZE; col++) {
+    for (int row = 0; row < current_order; row++) {
+        for (int col = 0; col < current_order; col++) {
             const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
             if (text && strlen(text) > 0 && isdigit(text[0])) {
                 currentGraph.graph[row][col] = atoi(text);
@@ -154,59 +258,22 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     gtk_widget_destroy(dialog);
 }
 
-// function to create and configure entries on the main grid
-void setup_grid(GtkBuilder *builder) {
-
-    // get the main grid
-    GtkWidget *main_grid = GTK_WIDGET(gtk_builder_get_object(builder, "IDGrid"));
-    if (!main_grid || !GTK_IS_GRID(main_grid)) {
-        return;
-    }
-    
-    // initialize the matrix with entries
-    entries = g_malloc(5 * sizeof(GtkWidget**));
-    for (int i = 0; i < 5; i++) {
-        entries[i] = g_malloc(5 * sizeof(GtkWidget*));
-    }
-
-    // create x amount of entries
-    for (int row = 0; row < 5; row++) {
-        for (int col = 0; col < 5; col++) {
-            // create new entry
-            GtkWidget *entry = gtk_entry_new();
-            
-            // configure the entrys properties
-            gtk_entry_set_max_length(GTK_ENTRY(entry), 1);
-            gtk_entry_set_width_chars(GTK_ENTRY(entry), 1);
-            gtk_widget_set_size_request(entry, 50, 50);
-            gtk_entry_set_alignment(GTK_ENTRY(entry), 0.5);
-            
-            // configure expansion
-            gtk_widget_set_hexpand(entry, TRUE);
-            gtk_widget_set_vexpand(entry, TRUE);
-            gtk_widget_set_halign(entry, GTK_ALIGN_FILL);
-            gtk_widget_set_valign(entry, GTK_ALIGN_FILL);
-            
-            // connect validation signal
-            g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), NULL);
-            
-            // insert entry to the main grid
-            gtk_grid_attach(GTK_GRID(main_grid), entry, col, row, 1, 1);
-            
-            // save entry reference
-            entries[row][col] = entry;
-        }
-    }
+void on_spin_order_changed(GtkSpinButton *spin_button, GtkBuilder *builder) {
+    int new_size = gtk_spin_button_get_value_as_int(spin_button);
+    // update grid with new size
+    setup_grid(builder, new_size);
 }
 
 int main(int argc, char *argv[]) {
     GtkBuilder *builder;
     GtkWidget *window;
+
     gtk_init(&argc, &argv);
 
     builder = gtk_builder_new();
     gtk_builder_add_from_file(builder, "ui/hamilton.glade", NULL);
 
+    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
     window = GTK_WIDGET(gtk_builder_get_object(builder, "IDWindow"));
 
     
@@ -215,17 +282,21 @@ int main(int argc, char *argv[]) {
     GtkWidget *IDLoad = GTK_WIDGET(gtk_builder_get_object(builder, "IDLoad"));
     
     if (IDSave)
-        g_signal_connect(IDSave, "clicked", G_CALLBACK(on_save_button_clicked), NULL);
+        g_signal_connect(IDSave, "clicked", G_CALLBACK(on_save_button_clicked), builder);
     if (IDLoad)
-        g_signal_connect(IDLoad, "clicked", G_CALLBACK(on_load_button_clicked), NULL);
+        g_signal_connect(IDLoad, "clicked", G_CALLBACK(on_load_button_clicked), builder);
+    if (IDSpin)
+        g_signal_connect(IDSpin, "value-changed", G_CALLBACK(on_spin_order_changed), builder);
 
-    setup_grid(builder);
+    memset(&currentGraph, 0, sizeof(Graph));
+    // show a default 5x5 grid
+    currentGraph.order = 5;
+    setup_grid(builder, 5);
     
     g_signal_connect(window, "destroy", G_CALLBACK(on_window_destroy), NULL);
     
     gtk_builder_connect_signals(builder, NULL);
 
-    g_object_unref(builder);
     gtk_widget_show_all(window);
     gtk_main();
     

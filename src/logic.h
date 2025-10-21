@@ -1,9 +1,10 @@
 #ifndef GRAPH_LOGIC_H
 #define GRAPH_LOGIC_H
 
-#define SIZE 5
+#define SIZE 12
 
 typedef struct {
+    int order;
     int graph[SIZE][SIZE];
 } Graph;
 
