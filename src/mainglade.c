@@ -86,13 +86,16 @@ void setup_grid(GtkBuilder *builder, int size) {
         entries[i] = g_malloc(size * sizeof(GtkWidget*));
     }
 
+
     // create entries according to the specified size
     for (int row = 0; row < size; row++) {
         for (int col = 0; col < size; col++) {
             // create new entry
             GtkWidget *entry = gtk_entry_new();
-            
-            // configure the entrys properties
+            // show a 0 on the entry
+            gtk_entry_set_text(GTK_ENTRY(entry), "0");
+
+            // configure the entry properties
             gtk_entry_set_max_length(GTK_ENTRY(entry), 1);
             gtk_entry_set_width_chars(GTK_ENTRY(entry), 1);
             gtk_widget_set_size_request(entry, 50, 50);
@@ -114,7 +117,7 @@ void setup_grid(GtkBuilder *builder, int size) {
             entries[row][col] = entry;
         }
     }
-    // show the updated the grid
+    // show the updated grid
     gtk_widget_show_all(grid);
 }
 
@@ -157,13 +160,8 @@ void on_load_button_clicked(GtkButton *button, gpointer user_data) {
             // update entries
             for (int row = 0; row < currentGraph.order; row++) {
                 for (int col = 0; col < currentGraph.order; col++) {
-                    if (currentGraph.graph[row][col] != 0) {
-                        char text[2];
-                        snprintf(text, sizeof(text), "%d", currentGraph.graph[row][col]);
-                        gtk_entry_set_text(GTK_ENTRY(entries[row][col]), text);
-                    } else {
-                        gtk_entry_set_text(GTK_ENTRY(entries[row][col]), "");
-                    }
+                    if (currentGraph.graph[row][col] == 1)
+                        gtk_entry_set_text(GTK_ENTRY(entries[row][col]), "1");
                 }
             }
         } else {
