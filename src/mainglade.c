@@ -20,11 +20,9 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
 }
 
 // callback function to validate the numeric entry (0 or 1)
-void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length, 
-                         gint *position, gpointer user_data) {
+void on_entry_insert_text(GtkEditable *editable, char *new_text, gpointer user_data) {
     // avoid warnings
     (void)user_data;
-    (void)position;
     
     // only allow one character
     if (gtk_entry_get_text_length(GTK_ENTRY(editable)) >= 1) {
@@ -33,10 +31,22 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
     }
     
     // validate that the number is 0 or 1
-    for (int i = 0; i < new_text_length; i++) {
-        if (!isdigit(new_text[i]) || (new_text[i] != '0' && new_text[i] != '1')) {
-            g_signal_stop_emission_by_name(editable, "insert-text");
-            return;
+    if (!isdigit(new_text[0]) || (new_text[0] != '0' && new_text[0] != '1')) {
+        gtk_entry_set_text(GTK_ENTRY(editable), "0");
+        return;
+    }
+
+    // check if the user is trying to insert something on the diagonal (not allowed)
+    if (new_text[0] != '0') {
+        for (int row = 0; row < current_size; row++) {
+            for (int col = 0; col < current_size; col++) {
+                if (entries[row][col] == GTK_WIDGET(editable)) {
+                    // check the diagonal and replace with 0 if so
+                    if (row == col)
+                        gtk_entry_set_text(GTK_ENTRY(editable), "0");
+                    return;
+                }
+            }
         }
     }
 }
