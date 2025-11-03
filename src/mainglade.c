@@ -296,22 +296,47 @@ int main(int argc, char *argv[]) {
 
     gtk_init(&argc, &argv);
 
+    // Inicializar el builder
+    GError *error = NULL;
     builder = gtk_builder_new();
-    gtk_builder_add_from_file(builder, "ui/hamilton.glade", NULL);
+    
+    // Cargar el archivo de interfaz
+    if (!gtk_builder_add_from_file(builder, "ui/Grafos.glade", &error)) {
+        g_critical("Error al cargar el archivo Glade: %s", error->message);
+        g_error_free(error);
+        return 1;
+    }
 
-    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+    // Obtener la ventana principal (usando el ID correcto del archivo Glade)
     window = GTK_WIDGET(gtk_builder_get_object(builder, "IDWindow"));
+    if (!GTK_IS_WINDOW(window)) {
+        g_critical("No se pudo cargar la ventana principal (IDWindow)");
+        return 1;
+    }
 
-    // GtkWidget *IDLatex = GTK_WIDGET(gtk_builder_get_object(builder, "IDLatex"));
+    // Obtener los widgets con los IDs correctos del archivo Glade
+    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
     GtkWidget *IDSave = GTK_WIDGET(gtk_builder_get_object(builder, "IDSave"));
     GtkWidget *IDLoad = GTK_WIDGET(gtk_builder_get_object(builder, "IDLoad"));
-    
-    if (IDSave)
-        g_signal_connect(IDSave, "clicked", G_CALLBACK(on_save_button_clicked), builder);
-    if (IDLoad)
-        g_signal_connect(IDLoad, "clicked", G_CALLBACK(on_load_button_clicked), builder);
-    if (IDSpin)
+
+    // Verificar que los widgets necesarios existen
+    if (!GTK_IS_SPIN_BUTTON(IDSpin)) {
+        g_warning("No se encontró el widget IDSpin");
+    } else {
         g_signal_connect(IDSpin, "value-changed", G_CALLBACK(on_spin_order_changed), builder);
+    }
+
+    if (!GTK_IS_BUTTON(IDSave)) {
+        g_warning("No se encontró el widget IDSave");
+    } else {
+        g_signal_connect(IDSave, "clicked", G_CALLBACK(on_save_button_clicked), builder);
+    }
+
+    if (!GTK_IS_BUTTON(IDLoad)) {
+        g_warning("No se encontró el widget IDLoad");
+    } else {
+        g_signal_connect(IDLoad, "clicked", G_CALLBACK(on_load_button_clicked), builder);
+    }
 
     memset(&currentGraph, 0, sizeof(Graph));
     // show a default 5x5 grid
