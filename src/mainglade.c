@@ -20,10 +20,17 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
 }
 
 // callback function to validate the numeric entry (0 or 1)
-void on_entry_insert_text(GtkEditable *editable, char *new_text, gpointer user_data) {
-    // avoid warnings
-    (void)user_data;
+void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length, 
+                                            gint *position, gpointer user_data) {
+    (void)new_text_length;
+    (void)position;
+
+    GtkBuilder *builder = (GtkBuilder *)user_data;
     
+    GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
+        
+    int type = gtk_combo_box_get_active(GTK_COMBO_BOX(IDType));
+
     // only allow one character
     if (gtk_entry_get_text_length(GTK_ENTRY(editable)) >= 1) {
         g_signal_stop_emission_by_name(editable, "insert-text");
@@ -45,6 +52,22 @@ void on_entry_insert_text(GtkEditable *editable, char *new_text, gpointer user_d
                     if (row == col)
                         gtk_entry_set_text(GTK_ENTRY(editable), "0");
                     return;
+                }
+            }
+        }
+    }
+
+    // THIS PART DOESN'T WORK =====================================================
+
+    // if the graph is undirected, the matrix is symmetrical
+    if (type == 0) {
+        for (int row = 0; row < current_size; row++) {
+            for (int col = 0; col < current_size; col++) {
+                if (entries[row][col] == GTK_WIDGET(editable)) {
+                    if (row != col) {
+                        gtk_entry_set_text(GTK_ENTRY(entries[col][row]), "1");
+                        return;
+                    }
                 }
             }
         }
@@ -118,7 +141,7 @@ void setup_grid(GtkBuilder *builder, int size) {
             gtk_widget_set_valign(entry, GTK_ALIGN_FILL);
             
             // connect validation signal
-            g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), NULL);
+            g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), builder);
             
             // insert entry to the main grid
             gtk_grid_attach(GTK_GRID(grid), entry, col, row, 1, 1);
@@ -284,7 +307,6 @@ int main(int argc, char *argv[]) {
     GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
     window = GTK_WIDGET(gtk_builder_get_object(builder, "IDWindow"));
 
-    
     // GtkWidget *IDLatex = GTK_WIDGET(gtk_builder_get_object(builder, "IDLatex"));
     GtkWidget *IDSave = GTK_WIDGET(gtk_builder_get_object(builder, "IDSave"));
     GtkWidget *IDLoad = GTK_WIDGET(gtk_builder_get_object(builder, "IDLoad"));
