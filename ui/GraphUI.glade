@@ -2,6 +2,11 @@
 <!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
+  <object class="GtkImage" id="IDIMGAdMatrix">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="pixbuf">img/5.png</property>
+  </object>
   <object class="GtkImage" id="IDIMGLatex">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
@@ -11,6 +16,11 @@
     <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="pixbuf">img/2.png</property>
+  </object>
+  <object class="GtkImage" id="IDIMGRelativeMatrix">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="pixbuf">img/4.png</property>
   </object>
   <object class="GtkImage" id="IDIMGSave">
     <property name="visible">True</property>
@@ -80,7 +90,7 @@
           </packing>
         </child>
         <child>
-          <!-- n-columns=1 n-rows=8 -->
+          <!-- n-columns=1 n-rows=10 -->
           <object class="GtkGrid" id="IDGetters">
             <property name="width-request">100</property>
             <property name="height-request">80</property>
@@ -187,10 +197,36 @@
                 <property name="top-attach">3</property>
               </packing>
             </child>
+            <child>
+              <object class="GtkButton" id="IDRelativeMatrix">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="image">IDIMGRelativeMatrix</property>
+                <property name="relief">none</property>
+              </object>
+              <packing>
+                <property name="left-attach">0</property>
+                <property name="top-attach">8</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="IDAdjacencyMatrix">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="image">IDIMGAdMatrix</property>
+                <property name="relief">none</property>
+              </object>
+              <packing>
+                <property name="left-attach">0</property>
+                <property name="top-attach">9</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="x">1023</property>
-            <property name="y">300</property>
+            <property name="y">200</property>
           </packing>
         </child>
       </object>

@@ -19,21 +19,29 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
     gtk_main_quit();
 }
 
-// callback function to validate the numeric entry (0 or 1)
+// callback function to validate the numeric entry (greater than 0)
 void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length, 
                          gint *position, gpointer user_data) {
     (void)new_text_length;
     (void)position;
     (void)user_data;
 
-    // only allow one character
-    if (gtk_entry_get_text_length(GTK_ENTRY(editable)) >= 1) {
+    // Verificar si el texto actual ya tiene 3 dígitos
+    if (gtk_entry_get_text_length(GTK_ENTRY(editable)) >= 3) {
         g_signal_stop_emission_by_name(editable, "insert-text");
         return;
     }
     
-    // validate that the number is 0 or 1
-    if (!isdigit(new_text[0]) || (new_text[0] != '0' && new_text[0] != '1')) {
+    // Validar que solo se ingresen dígitos
+    for (int i = 0; new_text[i] != '\0'; i++) {
+        if (!isdigit(new_text[i])) {
+            g_signal_stop_emission_by_name(editable, "insert-text");
+            return;
+        }
+    }
+    
+    // Validar que el número sea mayor a 0
+    if (new_text[0] == '0' && gtk_entry_get_text_length(GTK_ENTRY(editable)) == 0) {
         g_signal_stop_emission_by_name(editable, "insert-text");
         return;
     }
@@ -75,18 +83,31 @@ void clear_grid(GtkBuilder *builder) {
         return;
 
     GtkWidget *grid = GTK_WIDGET(gtk_builder_get_object(builder, "IDGrid"));
-    if (!grid || !GTK_IS_GRID(grid)) return;
+    if (!grid || !GTK_IS_GRID(grid)) {
+        g_free(entries);
+        entries = NULL;
+        current_size = 0;
+        return;
+    }
 
     // delete all widgets from the grid
     GList *children = gtk_container_get_children(GTK_CONTAINER(grid));
-    for (GList *iter = children; iter != NULL; iter = g_list_next(iter))
-        gtk_widget_destroy(GTK_WIDGET(iter->data));
-    
+    for (GList *iter = children; iter != NULL; iter = g_list_next(iter)) {
+        if (iter->data) {
+            gtk_widget_destroy(GTK_WIDGET(iter->data));
+        }
+    }
     g_list_free(children);
 
     // free memory from the matrix
-    for (int i = 0; i < current_size; i++) 
-        g_free(entries[i]);
+    for (int i = 0; i < current_size; i++) {
+        if (entries[i] != NULL) {
+            // No necesitamos liberar los widgets individuales aquí, ya que
+            // GTK se encarga de ellos cuando destruimos el contenedor padre
+            g_free(entries[i]);
+            entries[i] = NULL;
+        }
+    }
 
     g_free(entries);
     entries = NULL;
@@ -94,7 +115,7 @@ void clear_grid(GtkBuilder *builder) {
 }
 
 // function to create and configure entries on the main grid
-void setup_grid(GtkBuilder *builder, int size) {
+void setup_grid(GtkBuilder *builder, int size, gboolean is_relative) {
     // clear the existing grid if one already exists
     if (entries)
         clear_grid(builder);
@@ -113,42 +134,98 @@ void setup_grid(GtkBuilder *builder, int size) {
         entries[i] = g_malloc(size * sizeof(GtkWidget*));
     }
 
-
     // create entries according to the specified size
     for (int row = 0; row < size; row++) {
         for (int col = 0; col < size; col++) {
-            // create new entry
-            GtkWidget *entry = gtk_entry_new();
-            // show a 0 on the entry
-            gtk_entry_set_text(GTK_ENTRY(entry), "0");
-
-            // configure the entry properties
-            gtk_entry_set_max_length(GTK_ENTRY(entry), 1);
-            gtk_entry_set_width_chars(GTK_ENTRY(entry), 1);
-            gtk_widget_set_size_request(entry, 50, 50);
-            gtk_entry_set_alignment(GTK_ENTRY(entry), 0.5);
-            
-            // configure expansion
-            gtk_widget_set_hexpand(entry, TRUE);
-            gtk_widget_set_vexpand(entry, TRUE);
-            gtk_widget_set_halign(entry, GTK_ALIGN_FILL);
-            gtk_widget_set_valign(entry, GTK_ALIGN_FILL);
-            
-            // connect validation signals
-            g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), NULL);
-            g_signal_connect(entry, "changed", G_CALLBACK(on_entry_changed), builder);
-            
-            // insert entry to the main grid
-            gtk_grid_attach(GTK_GRID(grid), entry, col, row, 1, 1);
-            
-            // save entry reference
-            entries[row][col] = entry;
+            if (is_relative) {
+                // Crear un grid para las coordenadas (X,Y)
+                GtkWidget *coord_grid = gtk_grid_new();
+                gtk_grid_set_column_homogeneous(GTK_GRID(coord_grid), TRUE);
+                gtk_grid_set_row_homogeneous(GTK_GRID(coord_grid), TRUE);
+                gtk_grid_set_column_spacing(GTK_GRID(coord_grid), 2);
+                
+                // Crear los campos de entrada para X e Y
+                GtkWidget *entry_x = gtk_entry_new();
+                GtkWidget *entry_y = gtk_entry_new();
+                
+                // Configurar los campos de entrada
+                gtk_entry_set_text(GTK_ENTRY(entry_x), "0");
+                gtk_entry_set_text(GTK_ENTRY(entry_y), "0");
+                gtk_entry_set_max_length(GTK_ENTRY(entry_x), 3);
+                gtk_entry_set_max_length(GTK_ENTRY(entry_y), 3);
+                gtk_entry_set_width_chars(GTK_ENTRY(entry_x), 3);
+                gtk_entry_set_width_chars(GTK_ENTRY(entry_y), 3);
+                gtk_widget_set_size_request(entry_x, 30, 20);
+                gtk_widget_set_size_request(entry_y, 30, 20);
+                
+                // Conectar señales de validación
+                g_signal_connect(entry_x, "insert-text", 
+                               G_CALLBACK(on_entry_insert_text), NULL);
+                g_signal_connect(entry_y, "insert-text", 
+                               G_CALLBACK(on_entry_insert_text), NULL);
+                g_signal_connect(entry_x, "changed", 
+                               G_CALLBACK(on_entry_changed), builder);
+                g_signal_connect(entry_y, "changed", 
+                               G_CALLBACK(on_entry_changed), builder);
+                
+                // Crear etiquetas X: e Y:
+                GtkWidget *label_x = gtk_label_new("X:");
+                GtkWidget *label_y = gtk_label_new("Y:");
+                
+                // Crear un grid para organizar las etiquetas y los campos
+                GtkWidget *x_container = gtk_grid_new();
+                GtkWidget *y_container = gtk_grid_new();
+                
+                // Configurar los contenedores
+                gtk_grid_attach(GTK_GRID(x_container), label_x, 0, 0, 1, 1);
+                gtk_grid_attach(GTK_GRID(x_container), entry_x, 1, 0, 1, 1);
+                gtk_grid_attach(GTK_GRID(y_container), label_y, 0, 0, 1, 1);
+                gtk_grid_attach(GTK_GRID(y_container), entry_y, 1, 0, 1, 1);
+                
+                // Añadir los contenedores al grid de coordenadas
+                gtk_grid_attach(GTK_GRID(coord_grid), x_container, 0, 0, 1, 1);
+                gtk_grid_attach(GTK_GRID(coord_grid), y_container, 1, 0, 1, 1);
+                
+                // Mostrar todo
+                gtk_widget_show_all(coord_grid);
+                
+                // Crear un contenedor para el par de coordenadas
+                GtkWidget *container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+                gtk_box_pack_start(GTK_BOX(container), coord_grid, TRUE, TRUE, 0);
+                gtk_widget_show_all(container);
+                
+                // Insertar el contenedor en el grid principal
+                gtk_grid_attach(GTK_GRID(grid), container, col, row, 1, 1);
+                
+                // No necesitamos guardar referencias a los widgets individuales
+                // ya que GTK manejará su ciclo de vida a través del contenedor padre
+                entries[row][col] = NULL;  // Marcamos como NULL ya que no necesitamos acceder a estos widgets después
+            } else {
+                // Código original para la matriz de adyacencia
+                GtkWidget *entry = gtk_entry_new();
+                gtk_entry_set_text(GTK_ENTRY(entry), "0");
+                gtk_entry_set_max_length(GTK_ENTRY(entry), 1);
+                gtk_entry_set_width_chars(GTK_ENTRY(entry), 1);
+                gtk_widget_set_size_request(entry, 50, 50);
+                gtk_entry_set_alignment(GTK_ENTRY(entry), 0.5);
+                
+                gtk_widget_set_hexpand(entry, TRUE);
+                gtk_widget_set_vexpand(entry, TRUE);
+                gtk_widget_set_halign(entry, GTK_ALIGN_FILL);
+                gtk_widget_set_valign(entry, GTK_ALIGN_FILL);
+                
+                g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), NULL);
+                g_signal_connect(entry, "changed", G_CALLBACK(on_entry_changed), builder);
+                
+                gtk_grid_attach(GTK_GRID(grid), entry, col, row, 1, 1);
+                entries[row][col] = entry;
+            }
         }
     }
-    // show the updated grid
+    
+    // Mostrar todo el grid
     gtk_widget_show_all(grid);
 }
-
 // function to load a graph into a binary file
 void on_load_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
@@ -183,7 +260,7 @@ void on_load_button_clicked(GtkButton *button, gpointer user_data) {
                 gtk_spin_button_set_value(IDSpin, currentGraph.order);
             
             // update matrix on the interface
-            setup_grid(builder, currentGraph.order);
+            setup_grid(builder, currentGraph.order, FALSE);
 
             // update entries
             for (int row = 0; row < currentGraph.order; row++) {
@@ -286,8 +363,62 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
 
 void on_spin_order_changed(GtkSpinButton *spin_button, GtkBuilder *builder) {
     int new_size = gtk_spin_button_get_value_as_int(spin_button);
+    // Determinar si estamos en modo relativo o adyacencia
+    GtkWidget *relativeButton = GTK_WIDGET(gtk_builder_get_object(builder, "IDRelativeMatrix"));
+    gboolean is_relative = relativeButton && !gtk_widget_get_sensitive(relativeButton);
+    
     // update grid with new size
-    setup_grid(builder, new_size);
+    setup_grid(builder, new_size, is_relative);
+}
+
+// Función manejadora para el botón de matriz de adyacencia
+void on_adjacency_matrix_clicked(GtkButton *button, gpointer user_data) {
+    (void)button;
+    GtkBuilder *builder = (GtkBuilder *)user_data;
+    
+    // Obtener referencias a los botones
+    GtkWidget *relativeButton = GTK_WIDGET(gtk_builder_get_object(builder, "IDRelativeMatrix"));
+    GtkWidget *adjacencyButton = GTK_WIDGET(gtk_builder_get_object(builder, "IDAdjacencyMatrix"));
+    
+    // Obtener el tamaño actual del grid
+    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+    int size = gtk_spin_button_get_value_as_int(IDSpin);
+    
+    // Actualizar la interfaz
+    if (relativeButton) {
+        gtk_widget_set_sensitive(relativeButton, TRUE);
+    }
+    if (adjacencyButton) {
+        gtk_widget_set_sensitive(adjacencyButton, FALSE);
+    }
+    
+    // Recrear el grid en modo adyacencia
+    setup_grid(builder, size, FALSE);
+}
+
+// Función manejadora para el botón de matriz de adyacencia relativa
+void on_relative_matrix_clicked(GtkButton *button, gpointer user_data) {
+    (void)button;
+    GtkBuilder *builder = (GtkBuilder *)user_data;
+    
+    // Obtener referencias a los botones
+    GtkWidget *relativeButton = GTK_WIDGET(gtk_builder_get_object(builder, "IDRelativeMatrix"));
+    GtkWidget *adjacencyButton = GTK_WIDGET(gtk_builder_get_object(builder, "IDAdjacencyMatrix"));
+    
+    // Obtener el tamaño actual del grid
+    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+    int size = gtk_spin_button_get_value_as_int(IDSpin);
+    
+    // Actualizar la interfaz
+    if (relativeButton) {
+        gtk_widget_set_sensitive(relativeButton, FALSE);
+    }
+    if (adjacencyButton) {
+        gtk_widget_set_sensitive(adjacencyButton, TRUE);
+    }
+    
+    // Recrear el grid en modo relativo
+    setup_grid(builder, size, TRUE);
 }
 
 int main(int argc, char *argv[]) {
@@ -329,6 +460,25 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Obtener los botones de matriz
+    GtkWidget *IDRelativeMatrix = GTK_WIDGET(gtk_builder_get_object(builder, "IDRelativeMatrix"));
+    GtkWidget *IDAdjacencyMatrix = GTK_WIDGET(gtk_builder_get_object(builder, "IDAdjacencyMatrix"));
+
+    gtk_widget_set_sensitive(IDAdjacencyMatrix, FALSE);
+
+    // Conectar las señales de los botones
+    if (!GTK_IS_BUTTON(IDRelativeMatrix)) {
+        g_warning("No se encontró el widget IDRelativeMatrix");
+    } else {
+        g_signal_connect(IDRelativeMatrix, "clicked", G_CALLBACK(on_relative_matrix_clicked), builder);
+    }
+
+    if (!GTK_IS_BUTTON(IDAdjacencyMatrix)) {
+        g_warning("No se encontró el widget IDAdjacencyMatrix");
+    } else {
+        g_signal_connect(IDAdjacencyMatrix, "clicked", G_CALLBACK(on_adjacency_matrix_clicked), builder);
+    }
+
     // Obtener los widgets con los IDs correctos del archivo Glade
     GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
     GtkWidget *IDSave = GTK_WIDGET(gtk_builder_get_object(builder, "IDSave"));
@@ -356,7 +506,7 @@ int main(int argc, char *argv[]) {
     memset(&currentGraph, 0, sizeof(Graph));
     // show a default 5x5 grid
     currentGraph.order = 5;
-    setup_grid(builder, 5);
+    setup_grid(builder, 5, FALSE); 
     
     g_signal_connect(window, "destroy", G_CALLBACK(on_window_destroy), NULL);
     
