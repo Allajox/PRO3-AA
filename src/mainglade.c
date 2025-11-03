@@ -21,15 +21,10 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
 
 // callback function to validate the numeric entry (0 or 1)
 void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length, 
-                                            gint *position, gpointer user_data) {
+                         gint *position, gpointer user_data) {
     (void)new_text_length;
     (void)position;
-
-    GtkBuilder *builder = (GtkBuilder *)user_data;
-    
-    GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
-        
-    int type = gtk_combo_box_get_active(GTK_COMBO_BOX(IDType));
+    (void)user_data;
 
     // only allow one character
     if (gtk_entry_get_text_length(GTK_ENTRY(editable)) >= 1) {
@@ -39,36 +34,35 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
     
     // validate that the number is 0 or 1
     if (!isdigit(new_text[0]) || (new_text[0] != '0' && new_text[0] != '1')) {
-        gtk_entry_set_text(GTK_ENTRY(editable), "0");
+        g_signal_stop_emission_by_name(editable, "insert-text");
         return;
     }
+}
+
+void on_entry_changed(GtkEditable *editable, gpointer user_data) {
+    GtkBuilder *builder = (GtkBuilder *)user_data;
+
+    // gets the graph type, 1 is directed, 0 undirected
+    GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
+    int type = gtk_combo_box_get_active(GTK_COMBO_BOX(IDType));
+
+    // gets the text from the entry in case the graph is undirected
+    const gchar *new_text = gtk_entry_get_text(GTK_ENTRY(editable));
 
     // check if the user is trying to insert something on the diagonal (not allowed)
-    if (new_text[0] != '0') {
-        for (int row = 0; row < current_size; row++) {
-            for (int col = 0; col < current_size; col++) {
-                if (entries[row][col] == GTK_WIDGET(editable)) {
-                    // check the diagonal and replace with 0 if so
-                    if (row == col)
-                        gtk_entry_set_text(GTK_ENTRY(editable), "0");
+    for (int row = 0; row < current_size; row++) {
+        for (int col = 0; col < current_size; col++) {
+            if (entries[row][col] == GTK_WIDGET(editable)) {
+                // check the diagonal and replace with 0 if so
+                if (row == col && new_text[0] != '0') {
+                    gtk_entry_set_text(GTK_ENTRY(editable), "0");
                     return;
                 }
-            }
-        }
-    }
-
-    // THIS PART DOESN'T WORK =====================================================
-
-    // if the graph is undirected, the matrix is symmetrical
-    if (type == 0) {
-        for (int row = 0; row < current_size; row++) {
-            for (int col = 0; col < current_size; col++) {
-                if (entries[row][col] == GTK_WIDGET(editable)) {
-                    if (row != col) {
-                        gtk_entry_set_text(GTK_ENTRY(entries[col][row]), "1");
-                        return;
-                    }
-                }
+                
+                // checks if the graph is marked as undirected (0) and makes the matrix symmetrical
+                if (type == 0 && row != col) 
+                    gtk_entry_set_text(GTK_ENTRY(entries[col][row]), new_text);
+                return;
             }
         }
     }
@@ -140,8 +134,9 @@ void setup_grid(GtkBuilder *builder, int size) {
             gtk_widget_set_halign(entry, GTK_ALIGN_FILL);
             gtk_widget_set_valign(entry, GTK_ALIGN_FILL);
             
-            // connect validation signal
-            g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), builder);
+            // connect validation signals
+            g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), NULL);
+            g_signal_connect(entry, "changed", G_CALLBACK(on_entry_changed), builder);
             
             // insert entry to the main grid
             gtk_grid_attach(GTK_GRID(grid), entry, col, row, 1, 1);
