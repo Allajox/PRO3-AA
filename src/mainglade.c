@@ -37,6 +37,28 @@ void on_entry_insert_text_adjacency(GtkEditable *editable, gchar *new_text, gint
         g_signal_stop_emission_by_name(editable, "insert-text");
         return;
     }
+
+    // if the cell is 0, nothing happens
+    // without this, if the nodes' limit (current_size) has been reached
+    // and the user tries to write on the diagonal, the program crashes
+    if (new_text[0] == '0') {
+        return;
+    }
+
+    // counts the number of nodes (1's) until it reaches the limit
+    int nodes = 0;
+    for (int row = 0; row < current_size; row++) {
+        for (int col = 0; col < current_size; col++) {
+            const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
+            if (strcmp(text, "1") == 0)
+               nodes++;
+        }
+    }
+
+    if (nodes == current_size) {
+        g_signal_stop_emission_by_name(editable, "insert-text");
+        return;
+    }
 }
 
 // callback function to validate the numeric entry (greater than 0)
