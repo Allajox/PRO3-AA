@@ -142,8 +142,8 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
     // allow a single character '0' or '1'. If the entry already contains one
     // character and there's no selection, replace the existing character so
     // the user can type '1' directly (no need to select/delete first).
-    gint text_len = gtk_entry_get_text_length(GTK_ENTRY(editable));
-    if (text_len >= 1) {
+    
+    if (gtk_entry_get_text_length(GTK_ENTRY(editable)) >= 1) {
         gint sel_start, sel_end;
         if (!gtk_editable_get_selection_bounds(editable, &sel_start, &sel_end) || sel_end - sel_start <= 0) {
             // no selection: perform replace-if-valid behaviour
@@ -154,15 +154,33 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
                     gtk_entry_set_text(GTK_ENTRY(editable), buf);
                 }
             }
+            // DOESN'T SEEM TO BE NECESSARY
+
             // stop default insertion (we already handled replacement or ignored it)
-            g_signal_stop_emission_by_name(editable, "insert-text");
-            return;
+            //g_signal_stop_emission_by_name(editable, "insert-text");
+            //return;
         }
         // if there is a selection, allow the insertion (it will replace selected text)
     }
 
-    // validate that the inserted character is '0' or '1'
-    if (!new_text || new_text[0] == '\0' || !isdigit((unsigned char)new_text[0]) || (new_text[0] != '0' && new_text[0] != '1')) {
+    // if the cell is 0, nothing happens
+    // without this, if the nodes' limit (current_size) has been reached
+    // and the user tries to write on the diagonal, the program crashes
+    if (new_text[0] == '0') {
+        return;
+    }
+
+    // counts the number of nodes (1's) until it reaches the limit
+    int nodes = 0;
+    for (int row = 0; row < current_size; row++) {
+        for (int col = 0; col < current_size; col++) {
+            const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
+            if (strcmp(text, "1") == 0)
+               nodes++;
+        }
+    }
+
+    if (nodes == current_size) {
         g_signal_stop_emission_by_name(editable, "insert-text");
         return;
     }
@@ -437,6 +455,56 @@ void setup_grid(GtkBuilder *builder, int size) {
     gtk_widget_show_all(grid);
 }
 
+// function to create a matrix
+void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
+    (void)button;
+
+    GtkBuilder *builder = (GtkBuilder *)user_data;
+    
+    // get current size from spin button
+    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+    int current_order = gtk_spin_button_get_value_as_int(IDSpin);
+    
+    // update currentGraph with the interface data
+    currentGraph.order = current_order;
+    
+    for (int row = 0; row < current_order; row++) {
+        for (int col = 0; col < current_order; col++) {
+            const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
+            if (text && strcmp(text, "1") == 0)
+                currentGraph.graph[row][col] = 1;
+            else
+                currentGraph.graph[row][col] = 0;
+        }
+    }
+
+    int path[current_order];
+    path[0] = 0;
+    printf("Graph matrix:\n");
+    printGraph(currentGraph.graph, current_order);
+
+    // CYCLE
+    if (hamiltonian(currentGraph.graph, path, current_order, 1, 0)) {
+        printf("Hamiltonian cycle found: ");
+        // prints the cycle
+        for (int i = 0; i < current_order; i++)
+            printf("%d ", path[i]);
+        printf("%d ", path[0]);
+        printf("\n");
+    } else
+        printf("No cycle found\n");
+
+    // PATH
+    if (hamiltonian(currentGraph.graph, path, current_order, 1, 1)) {
+        printf("Hamiltonian path found: ");
+        // prints the cycle
+        for (int i = 0; i < current_order; i++)
+            printf("%d ", path[i]);
+        printf("\n");
+    } else
+        printf("No path found\n");
+}
+
 // BTN CARGAR (Click)
 void on_load_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
@@ -464,9 +532,15 @@ void on_load_button_clicked(GtkButton *button, gpointer user_data) {
         char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         
         if (loadGraph(filename, &currentGraph)) {
-
             // update spin button with the loaded order
             GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+            
+            // update combo box with the loaded order
+            GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
+
+            if (IDType)
+                gtk_combo_box_set_active(GTK_COMBO_BOX(IDType), currentGraph.type);
+            
             if (IDSpin)
                 gtk_spin_button_set_value(IDSpin, currentGraph.order);
             
@@ -514,13 +588,23 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     GtkBuilder *builder = (GtkBuilder *)user_data;
     
-    // Obtiene Actual Orden y lo actualiza en la Matriz
+    // get current order from spin button
     GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
     int current_order = 0;
+    
+    // get current type from combo box
+    GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
+    int current_type = 0;
+
+    if (IDType)
+        current_type = gtk_combo_box_get_active(GTK_COMBO_BOX(IDType));
+
     if (IDSpin)
         current_order = gtk_spin_button_get_value_as_int(IDSpin);
+        
+    currentGraph.type = current_type;
     currentGraph.order = current_order;
-    
+        
     // Obtiene la Matriz desde el Grid
     for (int row = 0; row < current_order; row++) {
         for (int col = 0; col < current_order; col++) {
@@ -577,7 +661,6 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     gint result = gtk_dialog_run(GTK_DIALOG(dialog));
 
     if (result == GTK_RESPONSE_ACCEPT) {
-        // 
         char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         
         // Siempre extension .bin
@@ -661,11 +744,17 @@ int main(int argc, char *argv[]) {
     else
         g_signal_connect(       IDLoad, "clicked", G_CALLBACK(          on_load_button_clicked  ), builder);
 
+    if (!GTK_IS_BUTTON(IDLatex)) {
+        g_warning("No se encontró el widget IDLatex");
+    } else {
+        g_signal_connect(IDLatex, "clicked", G_CALLBACK(on_latex_button_clicked), builder);
+    }
+
     // Guarda espacio para el Grafo
     memset(&currentGraph, 0, sizeof(Graph));
     // Seteamos un orden inicial    
-    currentGraph.order = 1;
-    setup_grid(builder, 1);
+    currentGraph.order = 5;
+    setup_grid(builder, 5);
     
     // Metodos para cerrar.
     g_signal_connect(window, "destroy", G_CALLBACK(on_window_destroy), NULL);
