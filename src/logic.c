@@ -1,16 +1,5 @@
-#include<stdio.h>
-
-#define SIZE 12
-
-typedef struct {
-    int order;
-    int graph[SIZE][SIZE];
-} Graph;
-
-typedef struct {
-    int row;
-    int col;
-} Cell;
+#include <stdio.h>
+#include "logic.h"
 
 void printGraph(int graph[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; i++) {
