@@ -3,6 +3,7 @@
 #define SIZE 12
 
 typedef struct {
+    int type;
     int order;
     int graph[SIZE][SIZE];
 } Graph;

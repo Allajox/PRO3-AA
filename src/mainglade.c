@@ -316,6 +316,12 @@ void on_load_button_clicked(GtkButton *button, gpointer user_data) {
 
             // update spin button with the loaded order
             GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+            
+            GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
+
+            if (IDType)
+                gtk_combo_box_set_active(GTK_COMBO_BOX(IDType), currentGraph.type);
+            
             if (IDSpin)
                 gtk_spin_button_set_value(IDSpin, currentGraph.order);
             
@@ -355,10 +361,17 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     // get current order from spin button
     GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
     int current_order = 0;
+    
+    GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
+    int current_type = 0;
+
+    if (IDType)
+        current_type = gtk_combo_box_get_active(GTK_COMBO_BOX(IDType));
 
     if (IDSpin)
         current_order = gtk_spin_button_get_value_as_int(IDSpin);
 
+    currentGraph.type = current_type;
     currentGraph.order = current_order;
     
     // get graph from interface
