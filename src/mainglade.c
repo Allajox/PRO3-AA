@@ -275,15 +275,26 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     printf("Graph matrix:\n");
     printGraph(currentGraph.graph, current_order);
 
-    if (hamiltonian(currentGraph.graph, path, current_order, 1)) {
+    // CYCLE
+    if (hamiltonian(currentGraph.graph, path, current_order, 1, 0)) {
         printf("Hamiltonian cycle found: ");
         // prints the cycle
         for (int i = 0; i < current_order; i++)
             printf("%d ", path[i]);
-
-        printf("%d\n", path[0]); // completes the cycle with the first node
+        printf("%d ", path[0]);
+        printf("\n");
     } else
-        printf("No solution found\n");
+        printf("No cycle found\n");
+
+    // PATH
+    if (hamiltonian(currentGraph.graph, path, current_order, 1, 1)) {
+        printf("Hamiltonian path found: ");
+        // prints the cycle
+        for (int i = 0; i < current_order; i++)
+            printf("%d ", path[i]);
+        printf("\n");
+    } else
+        printf("No path found\n");
 }
 
 // function to load a graph into a binary file

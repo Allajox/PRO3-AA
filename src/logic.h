@@ -17,7 +17,7 @@ typedef struct {
 void printGraph(int graph[SIZE][SIZE], int size);
 int saveGraph(const char *filename, const Graph *g);
 int loadGraph(const char *filename, Graph *g);
-int promising(int graph[SIZE][SIZE], int path[], int pos);
-int hamiltonian(int graph[SIZE][SIZE], int path[], int size, int pos);
+int promising(int graph[SIZE][SIZE], int path[SIZE], int pos);
+int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mode);
 
 #endif
