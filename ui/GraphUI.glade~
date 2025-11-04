@@ -198,7 +198,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="IDAdjacencyMatrix">
+              <object class="GtkButton" id="IDRelativeMatrix">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
@@ -211,7 +211,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="IDAdjacencMatrix">
+              <object class="GtkButton" id="IDAdjacencyMatrix">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
@@ -225,7 +225,7 @@
             </child>
           </object>
           <packing>
-            <property name="x">1023</property>
+            <property name="x">975</property>
             <property name="y">200</property>
           </packing>
         </child>

@@ -20,7 +20,27 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
 }
 
 // callback function to validate the numeric entry (greater than 0)
-void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length, 
+void on_entry_insert_text_adjacency(GtkEditable *editable, gchar *new_text, gint new_text_length, 
+                         gint *position, gpointer user_data) {
+    (void)new_text_length;
+    (void)position;
+    (void)user_data;
+
+    // only allow one character
+    if (gtk_entry_get_text_length(GTK_ENTRY(editable)) >= 1) {
+        g_signal_stop_emission_by_name(editable, "insert-text");
+        return;
+    }
+    
+    // validate that the number is 0 or 1
+    if (!isdigit(new_text[0]) || (new_text[0] != '0' && new_text[0] != '1')) {
+        g_signal_stop_emission_by_name(editable, "insert-text");
+        return;
+    }
+}
+
+// callback function to validate the numeric entry (greater than 0)
+void on_entry_insert_text_relative(GtkEditable *editable, gchar *new_text, gint new_text_length, 
                          gint *position, gpointer user_data) {
     (void)new_text_length;
     (void)position;
@@ -160,9 +180,9 @@ void setup_grid(GtkBuilder *builder, int size, gboolean is_relative) {
                 
                 // Conectar señales de validación
                 g_signal_connect(entry_x, "insert-text", 
-                               G_CALLBACK(on_entry_insert_text), NULL);
+                               G_CALLBACK(on_entry_insert_text_relative), NULL);
                 g_signal_connect(entry_y, "insert-text", 
-                               G_CALLBACK(on_entry_insert_text), NULL);
+                               G_CALLBACK(on_entry_insert_text_relative), NULL);
                 g_signal_connect(entry_x, "changed", 
                                G_CALLBACK(on_entry_changed), builder);
                 g_signal_connect(entry_y, "changed", 
@@ -214,7 +234,7 @@ void setup_grid(GtkBuilder *builder, int size, gboolean is_relative) {
                 gtk_widget_set_halign(entry, GTK_ALIGN_FILL);
                 gtk_widget_set_valign(entry, GTK_ALIGN_FILL);
                 
-                g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text), NULL);
+                g_signal_connect(entry, "insert-text", G_CALLBACK(on_entry_insert_text_adjacency), NULL);
                 g_signal_connect(entry, "changed", G_CALLBACK(on_entry_changed), builder);
                 
                 gtk_grid_attach(GTK_GRID(grid), entry, col, row, 1, 1);
@@ -426,21 +446,6 @@ int main(int argc, char *argv[]) {
     GtkWidget *window;
 
     gtk_init(&argc, &argv);
-
-    /* Load CSS for the UI (applies styles in ui/GraphStyle.css) */
-    {
-        GtkCssProvider *cssProvider = gtk_css_provider_new();
-        GError *css_error = NULL;
-        if (!gtk_css_provider_load_from_path(cssProvider, "ui/GraphStyle.css", &css_error)) {
-            g_warning("No se pudo cargar el CSS: %s", css_error ? css_error->message : "unknown");
-            if (css_error) g_clear_error(&css_error);
-        } else {
-            GdkScreen *screen = gdk_screen_get_default();
-            if (screen)
-                gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
-        }
-        g_object_unref(cssProvider);
-    }
 
     // Inicializar el builder
     GError *error = NULL;

@@ -225,7 +225,7 @@
             </child>
           </object>
           <packing>
-            <property name="x">1023</property>
+            <property name="x">975</property>
             <property name="y">200</property>
           </packing>
         </child>
