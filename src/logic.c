@@ -12,9 +12,9 @@ typedef struct {
     int col;
 } Cell;
 
-void printGraph(int graph[SIZE][SIZE]) {
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++)
+void printGraph(int graph[SIZE][SIZE], int size) {
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++)
             printf("%d ", graph[i][j]);
         printf("\n");
     }
@@ -40,7 +40,7 @@ int loadGraph(const char *filename, Graph *g) {
     return (leidos == 1); // 1 si se abrió el archivo, 0 si fue error
 }
 
-int promising(int graph[SIZE][SIZE], int path[SIZE], int pos) {
+int promising(int graph[SIZE][SIZE], int path[], int pos) {
     if (pos > 0 && !graph[path[pos - 1]][path[pos]])
         return 0;
 
@@ -52,19 +52,19 @@ int promising(int graph[SIZE][SIZE], int path[SIZE], int pos) {
     return 1;
 }
 
-int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int pos) {
+int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos) {
     // if the path is full
-    if (pos == SIZE) {
+    if (pos == size) {
         // returns true if the last node connects with the first. A solution was found
         return graph[path[pos - 1]][path[0]];
     }
     
     // tries all nodes
-    for (int i = 1; i < SIZE; i++) {
+    for (int i = 1; i < size; i++) {
         path[pos] = i; // tries the current node (i)
 
         if (promising(graph, path, pos)) { // checks if the node is promising
-            if (hamiltonian(graph, path, pos + 1)) // checks the next node
+            if (hamiltonian(graph, path, size, pos + 1)) // checks the next node
                 return 1;
                 
             path[pos] = -1; // if the path doesn't end in a solution, backtrack

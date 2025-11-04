@@ -246,6 +246,46 @@ void setup_grid(GtkBuilder *builder, int size, gboolean is_relative) {
     // Mostrar todo el grid
     gtk_widget_show_all(grid);
 }
+
+// function to create a matrix
+void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
+    (void)button;
+
+    GtkBuilder *builder = (GtkBuilder *)user_data;
+    
+    // Get current size from spin button
+    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
+    int current_order = gtk_spin_button_get_value_as_int(IDSpin);
+    
+    // Update currentGraph with the interface data
+    currentGraph.order = current_order;
+    
+    for (int row = 0; row < current_order; row++) {
+        for (int col = 0; col < current_order; col++) {
+            const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
+            if (text && strcmp(text, "1") == 0)
+                currentGraph.graph[row][col] = 1;
+            else
+                currentGraph.graph[row][col] = 0;
+        }
+    }
+
+    int path[current_order];
+    path[0] = 0;
+    printf("Graph matrix:\n");
+    printGraph(currentGraph.graph, current_order);
+
+    if (hamiltonian(currentGraph.graph, path, current_order, 1)) {
+        printf("Hamiltonian cycle found: ");
+        // prints the cycle
+        for (int i = 0; i < current_order; i++)
+            printf("%d ", path[i]);
+
+        printf("%d\n", path[0]); // completes the cycle with the first node
+    } else
+        printf("No solution found\n");
+}
+
 // function to load a graph into a binary file
 void on_load_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
@@ -488,6 +528,7 @@ int main(int argc, char *argv[]) {
     GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
     GtkWidget *IDSave = GTK_WIDGET(gtk_builder_get_object(builder, "IDSave"));
     GtkWidget *IDLoad = GTK_WIDGET(gtk_builder_get_object(builder, "IDLoad"));
+    GtkWidget *IDLatex = GTK_WIDGET(gtk_builder_get_object(builder, "IDLatex"));
 
     // Verificar que los widgets necesarios existen
     if (!GTK_IS_SPIN_BUTTON(IDSpin)) {
@@ -506,6 +547,12 @@ int main(int argc, char *argv[]) {
         g_warning("No se encontró el widget IDLoad");
     } else {
         g_signal_connect(IDLoad, "clicked", G_CALLBACK(on_load_button_clicked), builder);
+    }
+
+    if (!GTK_IS_BUTTON(IDLatex)) {
+        g_warning("No se encontró el widget IDLatex");
+    } else {
+        g_signal_connect(IDLatex, "clicked", G_CALLBACK(on_latex_button_clicked), builder);
     }
 
     memset(&currentGraph, 0, sizeof(Graph));
