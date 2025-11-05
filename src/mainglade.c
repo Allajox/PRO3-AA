@@ -296,27 +296,12 @@ int main(int argc, char *argv[]) {
 
     gtk_init(&argc, &argv);
 
-    /* Load CSS for the UI (applies styles in ui/GraphStyle.css) */
-    {
-        GtkCssProvider *cssProvider = gtk_css_provider_new();
-        GError *css_error = NULL;
-        if (!gtk_css_provider_load_from_path(cssProvider, "ui/GraphStyle.css", &css_error)) {
-            g_warning("No se pudo cargar el CSS: %s", css_error ? css_error->message : "unknown");
-            if (css_error) g_clear_error(&css_error);
-        } else {
-            GdkScreen *screen = gdk_screen_get_default();
-            if (screen)
-                gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
-        }
-        g_object_unref(cssProvider);
-    }
-
     // Inicializar el builder
     GError *error = NULL;
     builder = gtk_builder_new();
     
     // Cargar el archivo de interfaz
-    if (!gtk_builder_add_from_file(builder, "ui/GraphUI.glade", &error)) {
+    if (!gtk_builder_add_from_file(builder, "ui/Grafos.glade", &error)) {
         g_critical("Error al cargar el archivo Glade: %s", error->message);
         g_error_free(error);
         return 1;
