@@ -473,7 +473,7 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
         printf("No cycle found\n");
 
     // PATH
-    if (hamiltonian(currentGraph.graph, path, current_order, 1, 1)) {
+    if (hamiltonian(currentGraph.graph, path, current_order, 0, 1)) {
         printf("Hamiltonian path found: ");
         // prints the cycle
         for (int i = 0; i < current_order; i++)

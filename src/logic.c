@@ -54,7 +54,7 @@ int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mo
     }
     
     // tries all nodes
-    for (int i = 1; i < size; i++) {
+    for (int i = 0; i < size; i++) {
         path[pos] = i; // tries the current node (i)
 
         if (promising(graph, path, pos)) { // checks if the node is promising
@@ -131,8 +131,8 @@ int main() {
     int path[SIZE];
     path[0] = 0;
 
-    printGraph(graph3, 5);
-    if (eulerian(graph3, 5))
+    printGraph(graph2, 5);
+    if (eulerian(graph2, 5))
         printf("Has euler path\n");
     else
         printf("No euler path\n");
@@ -148,7 +148,7 @@ int main() {
         printf("No cycle found\n");
     }
 
-    if (hamiltonian(graph2, path, 5, 1, 1)) {
+    if (hamiltonian(graph2, path, 5, 0, 1)) {
         printf("Hamiltonian path found: ");
         // prints the cycle
         for (int i = 0; i < 5; i++)
