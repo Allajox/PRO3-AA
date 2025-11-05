@@ -30,7 +30,13 @@ typedef struct {
 void printGraph(int graph[SIZE][SIZE], int size);
 int saveGraph(const char *filename, const Graph *g);
 int loadGraph(const char *filename, Graph *g);
+
 int promising(int graph[SIZE][SIZE], int path[SIZE], int pos);
 int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mode);
+int isConnected(int graph[SIZE][SIZE], int size);
+int eulerianCycleDirected(int graph[SIZE][SIZE], int size);
+int eulerianPathDirected(int graph[SIZE][SIZE], int size);
+int eulerianCycle(int graph[SIZE][SIZE], int size);
+int eulerianPath(int graph[SIZE][SIZE], int size);
 
 #endif

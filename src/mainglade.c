@@ -503,6 +503,7 @@ void generate_datetime_filename_prefix(char *buffer, size_t length) {
 
 // ComboBox "Type"
 void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
+    (void)user_data;
     //GtkBuilder *builder = (GtkBuilder *)user_data;
 
     int new_type = gtk_combo_box_get_active(combo_box);
@@ -516,7 +517,8 @@ void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
 // Botón "LaTeX" / Verificar Hamiltoniano
 void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
-    GtkBuilder *builder = (GtkBuilder *)user_data;
+    (void)user_data;
+    //GtkBuilder *builder = (GtkBuilder *)user_data;
 
     // Llama Función mágica
     load_booleans_graph(&currentGraph);
