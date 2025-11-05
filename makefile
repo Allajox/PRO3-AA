@@ -8,7 +8,7 @@ CFLAGS = -Wall -Wextra -std=c11 `pkg-config --cflags gtk+-3.0`
 LIBS = -lm `pkg-config --libs gtk+-3.0`
 
 # Nombre del ejecutable
-TARGET = grafos
+TARGET = Graphs
 
 # Directorio fuente
 SRC_DIR = src

@@ -4,19 +4,29 @@
 #define SIZE 12
 
 typedef struct {
-    int order;
-    int graph[SIZE][SIZE];
-} Graph;
-
-typedef struct {
     int row;
     int col;
 } Cell;
 
-void printGraph(int graph[SIZE][SIZE]);
+// Relative coordinate structure used by the GUI when a '1' is placed
+// Relative coordinate structure used by the GUI when a '1' is placed
+typedef struct {
+    int x;
+    int y;
+} Coo;
+
+// Graph structure includes adjacency matrix and per-node coordinates for persistence
+typedef struct {
+    int type;
+    int order;
+    int graph[SIZE][SIZE];
+    Coo coords[SIZE];
+} Graph;
+
+void printGraph(int graph[SIZE][SIZE], int size);
 int saveGraph(const char *filename, const Graph *g);
 int loadGraph(const char *filename, Graph *g);
 int promising(int graph[SIZE][SIZE], int path[SIZE], int pos);
-int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int pos);
+int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mode);
 
 #endif
