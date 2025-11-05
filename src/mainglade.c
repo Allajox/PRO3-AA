@@ -471,19 +471,137 @@ void load_booleans_graph(Graph *g) {
 
 // Latex Builder
 void latex_builder(const char *filename, const Graph *g) {
+
     FILE *file = fopen(filename, "w");
+    
     if (!file) {
         g_warning("Failed to open LaTeX file for writing");
         return;
     }
-    fprintf(file, "\\documentclass{article}\n\\begin{document}\n");
-    fprintf(file, "Graph properties:\\newline\n");
-    fprintf(file, "Directed: %s\\newline\n", g->isDirected ? "Yes" : "No");
-    fprintf(file, "Eulerian: %s\\newline\n", g->isEulerian ? "Yes" : "No");
-    fprintf(file, "Semi-Eulerian: %s\\newline\n", g->isSemiEulerian ? "Yes" : "No");
-    fprintf(file, "Hamiltonian: %s\\newline\n", g->isHamilton ? "Yes" : "No");
-    fprintf(file, "Connected: %s\\newline\n", g->isConnected ? "Yes" : "No");
-    fprintf(file, "\\end{document}\n");
+    
+    fprintf(file,
+        "\\documentclass[12pt]{article}\n\n"
+        "%% ==== PACKAGES NECESARIOS ====\n"
+        "\\usepackage{fancyhdr}\n"
+        "\\usepackage{lastpage}\n"
+        "\\usepackage{setspace}\n"
+        "\\usepackage[T1]{fontenc}\n"
+        "\\usepackage{tikz}\n"
+        "\\usepackage[font=small, labelfont=bf]{caption}\n\n"
+
+        "%% ==== CONFIGURACIÓN ====\n"
+        "\\newcommand{\\HRule}[1]{\\rule{\\linewidth}{#1}}\n"
+        "\\onehalfspacing\n"
+        "\\setcounter{tocdepth}{5}\n"
+        "\\setcounter{secnumdepth}{5}\n\n"
+
+        "\\pagestyle{fancy}\n"
+        "\\fancyhf{}\n"
+        "\\setlength\\headheight{15pt}\n"
+        "\\fancyhead[R]{Josu\\'e Hidalgo \\& Allan Jim\\'enez}\n"
+        "\\fancyfoot[R]{Page \\thepage\\ of \\pageref{LastPage}}\n\n"
+
+        "\\usepackage[backend=biber,style=ieee]{biblatex}\n"
+        "\\addbibresource{references.bib}\n\n"
+
+        "\\begin{document}\n\n"
+
+        "\\title{\n"
+        "\t\\HRule{0.5pt} \\\\\n"
+        "\t\\LARGE \\textbf{\\uppercase{ALGORITHM ANALYSIS PROGRAMMED PROJECT 03}}\\\\\n"
+        "\t\\HRule{2pt} \\\\ [0.5cm]\n"
+        "\t\\normalsize \\vspace*{2\\baselineskip}}\n\n"
+
+        "\\date{}\n\n"
+
+        "\\author{\n"
+        "\tJosu\\'e Hidalgo \\& Allan Jim\\'enez \\\\\n"
+        "\tStudent ID: 2024800128 \\& 2024154925 \\\\\\\\\n"
+        "\tInstituto Tecnol\\'ogico de Costa Rica \\\\\n"
+        "\tComputer Engineering Department \\\\\\\\\n"
+        "\tProfessor Francisco Torres \\\\\n"
+        "\t2nd semester, 2025}\n\n"
+
+        "\\maketitle\n"
+        "\\thispagestyle{empty}\n"
+        "\\clearpage\n"
+        "\\pagenumbering{arabic}\n"
+        "\\setcounter{page}{1}\n"
+        "\\newpage\n\n"
+
+        "\\section{William Rowan Hamilton}\n"
+        "\\begin{itemize}\n"
+        "    \\item He was an Irish-British physicist, astronomer, and mathematician, considered the second most important mathematician in the United Kingdom after Isaac Newton. From an early age, he showed exceptional talent for mathematics and languages, being recognized as a child prodigy.\n"
+        "    \\item Hamilton is known for creating the ``Icosian Game,'' a mathematical game based on traversing the vertices of a dodecahedron without repeating any, considered a precursor to modern graph theory problems.\n"
+        "    \\item He is also famous for his discovery of quaternions, an extension of complex numbers that revolutionized the field of algebra.\n"
+        "    \\item According to legend, Hamilton was inspired to come up with this idea while walking across Brougham Bridge in Dublin, and in a moment of inspiration, he wrote the fundamental formula for quaternions on one of the bridge's stones. In honor of this event, a commemorative plaque is on the bridge that recalls this historic moment in science and mathematics.\n"
+        "\\end{itemize}\n\n"
+
+        "\\newpage\n\n"
+
+        "\\section{What are Hamiltonian paths and cycles?}\n"
+        "\\subsection{Hamiltonian paths}\n"
+        "\\begin{description}\n"
+        "    \\item[Def:] A simple path that visits every vertex in the graph.\n"
+        "    \\item[Def:] A path with no repeated vertices that visits all vertices of the graph.\n"
+        "\\end{description}\n"
+        "\\subsection{Hamiltonian cycles}\n"
+        "\\begin{description}\n"
+        "    \\item[Def:] A simple cycle that visits every vertex in the graph.\n"
+        "    \\item[Def:] A path with no repeated vertices in which the first and last vertices are the same, visiting all vertices of the graph.\n"
+        "\\end{description}\n\n"
+
+        "\\newpage\n\n"
+
+        "\\section{Leonhard Euler}\n"
+        "\\begin{itemize}\n"
+        "    \\item He was a Swiss mathematician, physicist, and astronomer widely recognized as one of the most prolific and brilliant scientists in history. His contributions span virtually every branch of mathematics, from calculus and number theory to geometry, mechanics, and optics.\n"
+        "    \\item Euler was a disciple of Johann Bernoulli and, thanks to his genius, revolutionized mathematical notation by introducing symbols that are still used today, such as $e$ for the base of natural logarithms, $i$ for the imaginary unit, and $f(x)$ for functions.\n"
+        "    \\item Among his many achievements are Euler's formula for polyhedra $(V - E + F = 2)$, his graph theory (based on the famous K\\\"onigsberg bridge problem), and Euler's identity, considered one of the most beautiful expressions in mathematics.\n"
+        "    \\item Despite losing his sight in his later years, Euler continued to work with a prodigious memory, dictating thousands of pages of research that cemented his place as one of the most influential mathematicians of all time.\n"
+        "\\end{itemize}\n\n"
+
+        "\\newpage\n\n"
+
+        "\\section{What are Eulerian paths and cycles?}\n\n"
+        "\\subsection{Eulerian paths}\n"
+        "\\begin{description}\n"
+        "    \\item[Def:] Path that visits every edge exactly once (vertices can repeat).\n"
+        "\\end{description}\n\n"
+        "\\subsection{Eulerian cycles}\n"
+        "\\begin{description}\n"
+        "    \\item[Def:] Cycle that visits every edge exactly once and ends in the same vertex that it started at.\n"
+        "\\end{description}\n\n"
+        "The way to determine an Eulerian cycle or path depends if the graph is directed or undirected. For directed graphs, every vertex needs to have an equal indegree and outdegree for it to have an Eulerian cycle; for an Eulerian path, at most one vertex has $(outdegree - indegree) = 1$ and at most one vertex has $(indegree - outdegree) = 1.$\n\n"
+        "For undirected graphs, every vertex needs to have an even degree for them to have an Eulerian cycle; for an Eulerian path, exactly two vertices need to have an odd degree.\n\n"
+
+        "\\newpage\n\n"
+
+        "\\section{Generated graph}\n"
+        "\\begin{center}\n"
+        "\\begin{tikzpicture}\n"
+        "\\node[draw, rounded corners=5pt, thick, minimum width=13.5cm, minimum height=18cm, align=center] (box) {\n"
+        "    \\textbf{Your Graph} \\\\[1em]\n"
+        "    %% === Graph ===\n"
+        "    \\begin{tikzpicture}[scale=1.5, every node/.style={circle, draw, thick, minimum size=8mm}]\n"
+        "        %% Nodes\n"
+        "        \\node (1) at (0,1) {1};\n"
+        "        \\node (2) at (2,0) {2};\n"
+        "        \\node (3) at (4,2) {3};\n\n"
+        "        %% Edges\n"
+        "        \\draw[thick] (1) -- (2);\n"
+        "        \\draw[thick] (2) -- (3);\n"
+        "    \\end{tikzpicture}\n"
+        "};\n"
+        "\\end{tikzpicture}\n"
+        "\\end{center}\n\n"
+
+        "\\newpage\n"
+        "\\section{Graph properties}\n"
+        "\\end{document}\n"
+    );
+
+
     fclose(file);
 }
 
@@ -527,22 +645,52 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     char filename_prefix[32];
     generate_datetime_filename_prefix(filename_prefix, sizeof(filename_prefix));
 
-    // Build LaTeX filename and PDF filename
+    // Build LaTeX filename
     char tex_filename[64];
-    char pdf_filename[64];
     snprintf(tex_filename, sizeof(tex_filename), "Files_PDF/%s.tex", filename_prefix);
-    snprintf(pdf_filename, sizeof(pdf_filename), "Files_PDF/%s.pdf", filename_prefix);
 
-    // Build LaTeX file
+    // Asegura que exista el directorio Files_PDF
+    g_mkdir_with_parents("Files_PDF", 0755);
+
+    // Si existe .referencec.bib en Files_PDF, copiarlo a references.bib
+    char ref_src[256];
+    char ref_dst[256];
+    snprintf(ref_src, sizeof(ref_src), "Files_PDF/.referencec.bib");
+    snprintf(ref_dst, sizeof(ref_dst), "Files_PDF/references.bib");
+
+    if (g_file_test(ref_src, G_FILE_TEST_EXISTS)) {
+        gchar *content = NULL;
+        GError *err = NULL;
+        if (g_file_get_contents(ref_src, &content, NULL, &err)) {
+            GError *err2 = NULL;
+            if (!g_file_set_contents(ref_dst, content, -1, &err2)) {
+                g_warning("No se pudo escribir %s: %s", ref_dst, err2->message);
+                g_error_free(err2);
+            }
+            g_free(content);
+        } else {
+            g_warning("No se pudo leer %s: %s", ref_src, err->message);
+            g_error_free(err);
+        }
+    }
+
+    // Build LaTeX file (solo generar .tex, no compilar ni abrir)
     latex_builder(tex_filename, &currentGraph);
 
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "pdflatex -output-directory=Files_PDF %s && rm Files_PDF/%s.aux Files_PDF/%s.log", tex_filename, filename_prefix, filename_prefix);
-    system(cmd);
+    char cmd[1024];
+    snprintf(cmd, sizeof(cmd),
+        "bash -c 'pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
+        "&& (cd Files_PDF && biber \"%s\") "
+        "&& pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
+        "&& pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
+        "&& xdg-open \"Files_PDF/%s.pdf\" >/dev/null 2>&1'",
+        tex_filename, filename_prefix, tex_filename, tex_filename, filename_prefix);
 
-    snprintf(cmd, sizeof(cmd), "evince %s &", pdf_filename);
-    system(cmd);
-}
+    GError *gerr = NULL;
+    if (!g_spawn_command_line_async(cmd, &gerr)) {
+        g_warning("No se pudo lanzar la compilación/visor: %s", gerr ? gerr->message : "unknown");
+        if (gerr) g_error_free(gerr);
+    }}
 
 // Botón "Cargar"
 void on_load_button_clicked(GtkButton *button, gpointer user_data) {
