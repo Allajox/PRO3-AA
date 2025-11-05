@@ -8,7 +8,6 @@ void printGraph(int graph[SIZE][SIZE], int size) {
         printf("\n");
     }
 }
-
 int saveGraph(const char *filename, const Graph *g) {
     FILE *file = fopen(filename, "wb");
     if (file == NULL)
@@ -18,7 +17,6 @@ int saveGraph(const char *filename, const Graph *g) {
 
     return (escritos == 1); // 1 si se abrió el archivo, 0 si fue error
 }
-
 int loadGraph(const char *filename, Graph *g) {
     FILE *file = fopen(filename, "rb");
     if (file == NULL)
@@ -29,45 +27,7 @@ int loadGraph(const char *filename, Graph *g) {
     return (leidos == 1); // 1 si se abrió el archivo, 0 si fue error
 }
 
-int promising(int graph[SIZE][SIZE], int path[SIZE], int pos) {
-    if (pos > 0 && !graph[path[pos - 1]][path[pos]])
-        return 0;
-
-    // checks if the node in the current position is repeated, if true, returns false
-    for (int i = 0; i < pos; i++) {
-        if (path[i] == path[pos])
-            return 0;
-    }
-    return 1;
-}
-
-// function that checks if the graph has a hamiltonian 
-// cycle or path, identified by a mode (0 for cycle, 1 for path)
-int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mode) {
-    // if the path is full
-    if (pos == size) {
-        if (mode == 0)  // cycle mode
-            // returns true if the last node connects with the first. A solution was found
-            return graph[path[pos - 1]][path[0]];
-        else            // path mode
-            return 1;   // doesn't check the last node
-    }
-    
-    // tries all nodes
-    for (int i = 0; i < size; i++) {
-        path[pos] = i; // tries the current node (i)
-
-        if (promising(graph, path, pos)) { // checks if the node is promising
-            if (hamiltonian(graph, path, size, pos + 1, mode)) // checks the next node
-                return 1;
-                
-            path[pos] = -1; // if the path doesn't end in a solution, backtrack
-        }
-    }    
-    return 0;
-}
-
-// Forman parte del mismo Campo
+// Just 1 "Island"
 int hasIsolatedVertex(int graph[SIZE][SIZE], int size) {
     for (int i = 0; i < size; i++) {
         int connected = 0;
@@ -112,10 +72,44 @@ int isConnected(int graph[SIZE][SIZE], int size) {
     return isFullyReachable(graph, size);
 }
 
+// Hamilton (Directed and Not Directed // Cycle or Path)
+int promising(int graph[SIZE][SIZE], int path[SIZE], int pos) {
+    if (pos > 0 && !graph[path[pos - 1]][path[pos]])
+        return 0;
+
+    // checks if the node in the current position is repeated, if true, returns false
+    for (int i = 0; i < pos; i++) {
+        if (path[i] == path[pos])
+            return 0;
+    }
+    return 1;
+}
+int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mode) {
+    // if the path is full
+    if (pos == size) {
+        if (mode == 0)  // cycle mode
+            // returns true if the last node connects with the first. A solution was found
+            return graph[path[pos - 1]][path[0]];
+        else            // path mode
+            return 1;   // doesn't check the last node
+    }
+    
+    // tries all nodes
+    for (int i = 0; i < size; i++) {
+        path[pos] = i; // tries the current node (i)
+
+        if (promising(graph, path, pos)) { // checks if the node is promising
+            if (hamiltonian(graph, path, size, pos + 1, mode)) // checks the next node
+                return 1;
+            path[pos] = -1; // if the path doesn't end in a solution, backtrack
+        }
+    }    
+    return 0;
+}
+
 // Euler
+// Not Directed
 int eulerianPath(int graph[SIZE][SIZE], int size) {
-    /* require weak connectivity */
-    if (!isConnected(graph, size)) return 0;
     int odd = 0;
 
     for (int i = 0; i < size; i++) {
@@ -137,8 +131,6 @@ int eulerianPath(int graph[SIZE][SIZE], int size) {
         return 1;
 }
 int eulerianCycle(int graph[SIZE][SIZE], int size) {
-    /* require weak connectivity */
-    if (!isConnected(graph, size)) return 0;
     int odd = 0;
 
     for (int i = 0; i < size; i++) {
@@ -158,10 +150,8 @@ int eulerianCycle(int graph[SIZE][SIZE], int size) {
     else 
         return 1;
 }
-int eulerianPathDirected(int graph[SIZE][SIZE], int size) { // Costo O(n²)
-    /* require weak connectivity (ignoring direction) */
-    if (!isConnected(graph, size)) return 0;
-
+//Directed
+int eulerianPathDirected(int graph[SIZE][SIZE], int size) { // Costo O(n²)?
     int indegree = 0, outdegree = 0;
 
     // Por cada nodo
@@ -193,11 +183,6 @@ int eulerianPathDirected(int graph[SIZE][SIZE], int size) { // Costo O(n²)
     return ( (indegree == 0 && outdegree == 0) || (indegree == 1 && outdegree == 1) );
 }
 int eulerianCycleDirected(int graph[SIZE][SIZE], int size) {
-    /* require weak connectivity (ignoring direction)
-     * Note: directed Eulerian cycle strictly requires strong connectivity
-     * on the subgraph with edges; here we perform a weak connectivity check
-     * as a minimal filter. */
-    if (!isConnected(graph, size)) return 0;
     for (int v = 0; v < size; v++) {
         
         int count_in = 0, count_out = 0;
@@ -218,6 +203,7 @@ int eulerianCycleDirected(int graph[SIZE][SIZE], int size) {
     return 1;
 }
 
+/*
 int main() {
     // HAS PATH AND CYCLE
     int graph[SIZE][SIZE] = {
@@ -305,3 +291,4 @@ int main() {
 
     return 0;
 }
+*/

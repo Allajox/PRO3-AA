@@ -1,24 +1,36 @@
+
+
 // BIBLIOTECAS
+
+
 #include <gtk/gtk.h>
 #include <string.h>
 #include <ctype.h>
 #include "logic.h"
 
-// VARIABLES GLOBALES
-Graph currentGraph;
-int current_size = 0; 
-gboolean isValidCoo = FALSE;
 
-GtkWidget ***entries = NULL;
-GtkWidget ***coo_entries = NULL;
-gboolean *coo_row_valid = NULL;
-gboolean *coo_row_dup = NULL;
+// VARIABLES GLOBALES
+
+
+Graph currentGraph;         // Grafo actual (estructura definida en logic.h)
+int current_size = 0;       // Tamaño actual del grafo (número de nodos)
+gboolean isValidCoo = FALSE;// Indica si las coordenadas son válidas
+
+GtkWidget ***entries = NULL;      // Matriz de GtkEntry (matriz de adyacencia)
+GtkWidget ***coo_entries = NULL;  // Matriz de GtkEntry para coordenadas
+gboolean *coo_row_valid = NULL;   // Indica si una fila de coordenadas es válida
+gboolean *coo_row_dup = NULL;     // Indica si hay coordenadas duplicadas
 GtkWidget *global_btn_save = NULL;
 GtkWidget *global_btn_latex = NULL;
 
+
 // FUNCIONES
 
-// update states (validity and duplicates) and refresh UI tooltips/classes
+
+// VALIDACIONES
+
+
+// Validación de coordenadas
 static void update_coo_states_and_ui(void) {
     if (!coo_entries || current_size <= 0) return;
 
@@ -26,7 +38,6 @@ static void update_coo_states_and_ui(void) {
     int *xs = g_new0(int, n);
     int *ys = g_new0(int, n);
 
-    // determine numeric validity and parse values
     for (int i = 0; i < n; i++) {
         const gchar *sx = gtk_entry_get_text(GTK_ENTRY(coo_entries[i][0]));
         const gchar *sy = gtk_entry_get_text(GTK_ENTRY(coo_entries[i][1]));
@@ -50,10 +61,8 @@ static void update_coo_states_and_ui(void) {
         ys[i] = (int)vy;
     }
 
-    // reset duplicates
     for (int i = 0; i < n; i++) coo_row_dup[i] = FALSE;
 
-    // find duplicates (exact pairs)
     for (int i = 0; i < n; i++) {
         if (!coo_row_valid[i]) continue;
         for (int j = i + 1; j < n; j++) {
@@ -65,7 +74,6 @@ static void update_coo_states_and_ui(void) {
         }
     }
 
-    // apply UI classes/tooltips per row
     for (int i = 0; i < n; i++) {
         GtkWidget *wx = coo_entries[i][0];
         GtkWidget *wy = coo_entries[i][1];
@@ -107,33 +115,18 @@ static void update_coo_states_and_ui(void) {
     g_free(xs);
     g_free(ys);
 
-    // set global validity: true if every row is valid and no duplicates flagged
     gboolean all_ok = TRUE;
     for (int i = 0; i < n; i++) {
         if (!coo_row_valid[i] || coo_row_dup[i]) { all_ok = FALSE; break; }
     }
     isValidCoo = all_ok;
 
-    // enable/disable save and latex buttons depending on coordinate validity
     if (global_btn_save)
         gtk_widget_set_sensitive(global_btn_save, isValidCoo);
     if (global_btn_latex)
         gtk_widget_set_sensitive(global_btn_latex, isValidCoo);
 }
-
-void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
-    // avoid warnings
-    (void)widget;
-    (void)data;
-    
-    if (builder) {
-        g_object_unref(builder);
-        builder = NULL;
-    }
-    gtk_main_quit();
-}
-
-// callback function to validate the numeric entry (0 or 1)
+// Validación de celdas de la matriz de adyacencia
 void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length, 
                          gint *position, gpointer user_data) {
     (void)new_text_length;
@@ -164,7 +157,7 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
     }
 }
 
-// insert-text validator for coordinate entries: allow only digits
+// Validación de coordenadas (solo dígitos)
 void coo_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length,
                           gint *position, gpointer user_data) {
     (void)new_text_length;
@@ -178,16 +171,18 @@ void coo_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text
         }
     }
 }
-
-// changed handler for coordinate entries: ensure positive integer (>0)
+// Validación de coordenadas (solo dígitos)
 void coo_entry_changed(GtkEditable *editable, gpointer user_data) {
     (void)user_data;
-    (void)editable; // mark as used to avoid unused-parameter warning
-    // Recompute validity and duplicates for all rows and update UI
+    (void)editable;
     update_coo_states_and_ui();
 }
 
-// focus-in handler: store current text as previous valid value
+
+// CREACIÓN MATRIZ y COO DE TAMAÑO "ORDER"
+
+
+// Manejo de selección de celdas
 gboolean coo_entry_focus_in(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
     (void)event;
     (void)user_data;
@@ -199,7 +194,7 @@ gboolean coo_entry_focus_in(GtkWidget *widget, GdkEvent *event, gpointer user_da
     return FALSE; // propagate
 }
 
-// 
+// Sincronización de la matriz de adyacencia
 void on_entry_changed(GtkEditable *editable, gpointer user_data) {
     GtkBuilder *builder = (GtkBuilder *)user_data;
 
@@ -235,7 +230,7 @@ void on_entry_changed(GtkEditable *editable, gpointer user_data) {
     }
 }
 
-// LIMPIAR GRID
+// Limpieza de la interfaz
 void clear_grid(GtkBuilder *builder) {
     // if there aren't any entries, return
     if (!entries) 
@@ -289,7 +284,7 @@ void clear_grid(GtkBuilder *builder) {
     current_size = 0;
 }
 
-// CREAR GRID
+// Creación de la matriz y coordenadas
 void setup_grid(GtkBuilder *builder, int size) {
     // clear the existing grid if one already exists
     if (entries)
@@ -433,7 +428,11 @@ void setup_grid(GtkBuilder *builder, int size) {
     gtk_widget_show_all(grid);
 }
 
-// function to create a matrix
+
+// WIDGETS //
+
+
+// Botón "LaTeX" / Verificar Hamiltoniano
 void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
 
@@ -483,7 +482,7 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
         printf("No path found\n");
 }
 
-// BTN CARGAR (Click)
+// Botón "Cargar"
 void on_load_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     
@@ -517,7 +516,7 @@ void on_load_button_clicked(GtkButton *button, gpointer user_data) {
             GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
 
             if (IDType)
-                gtk_combo_box_set_active(GTK_COMBO_BOX(IDType), currentGraph.type);
+                gtk_combo_box_set_active(GTK_COMBO_BOX(IDType), currentGraph.isDirected);
             
             if (IDSpin)
                 gtk_spin_button_set_value(IDSpin, currentGraph.order);
@@ -560,7 +559,7 @@ void on_load_button_clicked(GtkButton *button, gpointer user_data) {
     gtk_widget_destroy(dialog);
 }
 
-// BTN SALVAR (Click)
+// Botón "Guardar"
 void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     // Necesario para que funcione
     (void)button;
@@ -580,7 +579,7 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     if (IDSpin)
         current_order = gtk_spin_button_get_value_as_int(IDSpin);
         
-    currentGraph.type = current_type;
+    currentGraph.isDirected = current_type;
     currentGraph.order = current_order;
         
     // Obtiene la Matriz desde el Grid
@@ -666,15 +665,31 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     gtk_widget_destroy(dialog);
 }
 
-// SPIN CAMBIO DE ORDEN (NÚMERO DE NODOS)
+// Cambio de tamaño (spin button)
 void on_spin_order_changed(GtkSpinButton *spin_button, GtkBuilder *builder) {
     // Obtiene el número del GTKSpin y actualiza el Grid
     int new_size = gtk_spin_button_get_value_as_int(spin_button);
     setup_grid(builder, new_size);
 }
 
-// MAIN
-/*int main(int argc, char *argv[]) {
+// Cierre de ventana
+void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
+    // avoid warnings
+    (void)widget;
+    (void)data;
+    
+    if (builder) {
+        g_object_unref(builder);
+        builder = NULL;
+    }
+    gtk_main_quit();
+}
+
+
+// MAIN //
+
+
+int main(int argc, char *argv[]) {
 
     // Builder
     GtkBuilder  *builder;
@@ -743,4 +758,3 @@ void on_spin_order_changed(GtkSpinButton *spin_button, GtkBuilder *builder) {
     gtk_main();
     return 0;
 }
-*/

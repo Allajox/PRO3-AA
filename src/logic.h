@@ -9,7 +9,6 @@ typedef struct {
 } Cell;
 
 // Relative coordinate structure used by the GUI when a '1' is placed
-// Relative coordinate structure used by the GUI when a '1' is placed
 typedef struct {
     int x;
     int y;
@@ -17,11 +16,16 @@ typedef struct {
 
 // Graph structure includes adjacency matrix and per-node coordinates for persistence
 typedef struct {
-    int type;
     int order;
     int graph[SIZE][SIZE];
     Coo coords[SIZE];
+    int isDirected;
+    int isEulerian;
+    int isSemiEulerian;
+    int isHamilton;
+    int isConnected;
 } Graph;
+
 
 void printGraph(int graph[SIZE][SIZE], int size);
 int saveGraph(const char *filename, const Graph *g);
