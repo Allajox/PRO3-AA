@@ -696,6 +696,7 @@ void on_spin_order_changed(GtkSpinButton *spin_button, GtkBuilder *builder) {
 }
 
 // MAIN
+/*
 int main(int argc, char *argv[]) {
 
     // Builder
@@ -764,4 +765,4 @@ int main(int argc, char *argv[]) {
     gtk_widget_show_all(window);
     gtk_main();
     return 0;
-}
+}*/

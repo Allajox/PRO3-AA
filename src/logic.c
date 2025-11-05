@@ -67,7 +67,29 @@ int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mo
     return 0;
 }
 
-/*
+int eulerian(int graph[SIZE][SIZE], int size) {
+    int odd = 0;
+
+    for (int i = 0; i < size; i++) {
+        int count = 0;
+        for(int j = 0; j < size; j++) {
+            // stores the amount of vertices connected with 1
+            if (graph[i][j] == 1)
+                count++;
+        }
+        // if i has and odd number of connected vertices, increase by 1
+        if (count % 2 == 1)
+            odd++;
+    }
+
+    // if 
+    if (odd > 2)
+        return 0;
+    else 
+        return 1;
+}
+
+
 int main() {
     // HAS PATH AND CYCLE
     int graph[SIZE][SIZE] = {
@@ -79,7 +101,7 @@ int main() {
     };
 
     // NO PATH AND NO CYCLE
-    int graph1[5][5] = {
+    int graph1[SIZE][SIZE] = {
         {0, 1, 1, 0, 0},
         {1, 0, 1, 0, 0},
         {1, 1, 0, 0, 0},
@@ -96,11 +118,25 @@ int main() {
         {0, 0, 0, 1, 0}
     };
 
+    // DOESN'T HAVE EULER PATH
+    int graph3[SIZE][SIZE] = {
+        {0, 1, 0, 0, 0},
+        {1, 0, 1, 0, 0},
+        {0, 1, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 1, 0}
+    };
+
 
     int path[SIZE];
     path[0] = 0;
 
-    printGraph(graph2, 5);
+    printGraph(graph3, 5);
+    if (eulerian(graph3, 5))
+        printf("Has euler path\n");
+    else
+        printf("No euler path\n");
+
     if (hamiltonian(graph2, path, 5, 1, 0)) {
         printf("Hamiltonian cycle found: ");
         // prints the cycle
@@ -124,4 +160,3 @@ int main() {
 
     return 0;
 }
-*/
