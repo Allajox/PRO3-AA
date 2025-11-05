@@ -428,9 +428,37 @@ void setup_grid(GtkBuilder *builder, int size) {
     gtk_widget_show_all(grid);
 }
 
+// Limpieza de la Matriz
+void clear_graph_matrix(int size) {
+    //GtkBuilder *builder = (GtkBuilder *)user_data;
+    
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            currentGraph.graph[i][j] = 0;
+            if (entries && entries[i] && entries[i][j]) {
+                gtk_entry_set_text(GTK_ENTRY(entries[i][j]), "");
+            }
+        }
+    }
+
+    //if (entries)
+    //    clear_grid(builder);
+}
+
 
 // WIDGETS //
 
+// ComboBox "Type"
+void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
+    //GtkBuilder *builder = (GtkBuilder *)user_data;
+
+    int new_type = gtk_combo_box_get_active(combo_box);
+    if (new_type != currentGraph.isDirected) {
+        currentGraph.isDirected = new_type;
+        clear_graph_matrix(currentGraph.order);
+        // Optionally reset other graph data if needed
+    }
+}
 
 // Botón "LaTeX" / Verificar Hamiltoniano
 void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
@@ -561,7 +589,6 @@ void on_load_button_clicked(GtkButton *button, gpointer user_data) {
 
 // Botón "Guardar"
 void on_save_button_clicked(GtkButton *button, gpointer user_data) {
-    // Necesario para que funcione
     (void)button;
     GtkBuilder *builder = (GtkBuilder *)user_data;
     
@@ -667,7 +694,6 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
 
 // Cambio de tamaño (spin button)
 void on_spin_order_changed(GtkSpinButton *spin_button, GtkBuilder *builder) {
-    // Obtiene el número del GTKSpin y actualiza el Grid
     int new_size = gtk_spin_button_get_value_as_int(spin_button);
     setup_grid(builder, new_size);
 }
@@ -689,6 +715,7 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
 // MAIN //
 
 
+// Main
 int main(int argc, char *argv[]) {
 
     // Builder
@@ -719,6 +746,7 @@ int main(int argc, char *argv[]) {
     GtkWidget       *IDSave = GTK_WIDGET(gtk_builder_get_object(builder,        "IDSave"));
     GtkWidget       *IDLoad = GTK_WIDGET(gtk_builder_get_object(builder,        "IDLoad"));
     GtkWidget       *IDLatex = GTK_WIDGET(gtk_builder_get_object(builder,       "IDLatex"));
+    GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
     // Poner como globales para cumplir restricciones
     global_btn_save = IDSave;
     global_btn_latex = IDLatex;
@@ -728,10 +756,12 @@ int main(int argc, char *argv[]) {
         g_warning("No se encontró el widget IDSpin");
     else
         g_signal_connect(       IDSpin, "value-changed", G_CALLBACK(    on_spin_order_changed   ), builder);
+    
     if (!GTK_IS_BUTTON(         IDSave))
         g_warning("No se encontró el widget IDSave");
     else
         g_signal_connect(       IDSave, "clicked", G_CALLBACK(          on_save_button_clicked  ), builder);
+    
     if (!GTK_IS_BUTTON(         IDLoad))
         g_warning("No se encontró el widget IDLoad");
     else
@@ -742,6 +772,11 @@ int main(int argc, char *argv[]) {
     } else {
         g_signal_connect(IDLatex, "clicked", G_CALLBACK(on_latex_button_clicked), builder);
     }
+
+    if (!GTK_IS_COMBO_BOX_TEXT(IDType))
+        g_warning("No se encontró el widget IDType");
+    else
+        g_signal_connect(IDType, "changed", G_CALLBACK(on_type_changed), builder);
 
     // Guarda espacio para el Grafo
     memset(&currentGraph, 0, sizeof(Graph));
