@@ -67,7 +67,55 @@ int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mo
     return 0;
 }
 
-int eulerian(int graph[SIZE][SIZE], int size) {
+// Forman parte del mismo Campo
+int hasIsolatedVertex(int graph[SIZE][SIZE], int size) {
+    for (int i = 0; i < size; i++) {
+        int connected = 0;
+        for (int j = 0; j < size; j++) {
+            if (graph[i][j] || graph[j][i]) {
+                connected = 1;
+                break;
+            }
+        }
+        if (!connected)
+            return 1; // hay un vértice aislado
+    }
+    return 0;
+}
+int isFullyReachable(int graph[SIZE][SIZE], int size) {
+    int visited[SIZE] = {0};
+    int stack[SIZE];
+    int top = 0;
+
+    visited[0] = 1;
+    stack[top++] = 0;
+
+    while (top > 0) {
+        int v = stack[--top];
+        for (int u = 0; u < size; u++) {
+            if (!visited[u] && (graph[v][u] || graph[u][v])) {
+                visited[u] = 1;
+                stack[top++] = u;
+            }
+        }
+    }
+
+    for (int i = 0; i < size; i++)
+        if (!visited[i])
+            return 0;
+
+    return 1;
+}
+int isConnected(int graph[SIZE][SIZE], int size) {
+    if (hasIsolatedVertex(graph, size))
+        return 0;
+    return isFullyReachable(graph, size);
+}
+
+// Euler
+int eulerianPath(int graph[SIZE][SIZE], int size) {
+    /* require weak connectivity */
+    if (!isConnected(graph, size)) return 0;
     int odd = 0;
 
     for (int i = 0; i < size; i++) {
@@ -88,8 +136,88 @@ int eulerian(int graph[SIZE][SIZE], int size) {
     else 
         return 1;
 }
+int eulerianCycle(int graph[SIZE][SIZE], int size) {
+    /* require weak connectivity */
+    if (!isConnected(graph, size)) return 0;
+    int odd = 0;
 
-/**/
+    for (int i = 0; i < size; i++) {
+        int count = 0;
+        for(int j = 0; j < size; j++) {
+            // stores the amount of vertices connected with 1
+            if (graph[i][j] == 1)
+                count++;
+        }
+        // if i has and odd number of connected vertices, increase by 1
+        if (count % 2 == 1)
+            odd++;
+    }
+
+    if (odd > 0)
+        return 0;
+    else 
+        return 1;
+}
+int eulerianPathDirected(int graph[SIZE][SIZE], int size) { // Costo O(n²)
+    /* require weak connectivity (ignoring direction) */
+    if (!isConnected(graph, size)) return 0;
+
+    int indegree = 0, outdegree = 0;
+
+    // Por cada nodo
+    for (int v = 0; v < size; v++) {
+        int count_in = 0, count_out = 0;
+        
+        // Cuente 1s en fila y luego columna
+        for (int i = 0; i < size; i++)
+            if (graph[i][v] == 1) count_in++;
+        for (int j = 0; j < size; j++)
+            if (graph[v][j] == 1) count_out++;
+
+        // Salidas - Entradas es 1 => indegree = 1
+        if (count_out - count_in == 1)
+            indegree++;
+        // Entradas - Salidas es 1 => outdegree = 1
+        else if (count_in - count_out == 1)
+            outdegree++;
+        // Todos los otros vértices tienen igual #entradas y #salidas 
+        else if (count_in != count_out)
+            return 0;
+
+        // Supera diferencias en entradas y salidas entonces no SemiEuleriano
+        if (indegree > 1 || outdegree > 1)
+            return 0;
+    }
+
+    // Si es ciclo o semi entonces retorna 1 
+    return ( (indegree == 0 && outdegree == 0) || (indegree == 1 && outdegree == 1) );
+}
+int eulerianCycleDirected(int graph[SIZE][SIZE], int size) {
+    /* require weak connectivity (ignoring direction)
+     * Note: directed Eulerian cycle strictly requires strong connectivity
+     * on the subgraph with edges; here we perform a weak connectivity check
+     * as a minimal filter. */
+    if (!isConnected(graph, size)) return 0;
+    for (int v = 0; v < size; v++) {
+        
+        int count_in = 0, count_out = 0;
+        
+        for(int i = 0; i < size; i++) {
+            if (graph[i][v] == 1)
+                count_in++;
+        }
+        
+        for(int j = 0; j < size; j++) {
+            if (graph[v][j] == 1)
+                count_out++;
+        }
+        
+        if (count_in != count_out)
+            return 0;
+    }
+    return 1;
+}
+
 int main() {
     // HAS PATH AND CYCLE
     int graph[SIZE][SIZE] = {
@@ -127,20 +255,32 @@ int main() {
         {0, 0, 0, 1, 0}
     };
 
+    int graph4[SIZE][SIZE] = {
+        {0, 1, 0, 0}, 
+        {0, 0, 1, 0}, 
+        {1, 0, 0, 0}, 
+        {0, 0, 0, 0}, 
+    };
+
 
     int path[SIZE];
     path[0] = 0;
 
-    printGraph(graph2, 5);
-    if (eulerian(graph2, 5))
+    printGraph(graph, 5);
+    if (eulerianPathDirected(graph, 5))
         printf("Has euler path\n");
     else
         printf("No euler path\n");
 
-    if (hamiltonian(graph2, path, 5, 1, 0)) {
+    if (eulerianCycleDirected(graph, 5))
+        printf("It's Eulerian Graph\n");
+    else 
+        printf("It's not Eulerian Graph\n");
+
+    if (hamiltonian(graph, path, 5, 1, 0)) {
         printf("Hamiltonian cycle found: ");
         // prints the cycle
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 4; i++)
             printf("%d ", path[i]);
         printf("%d ", path[0]);
         printf("\n");
@@ -148,15 +288,20 @@ int main() {
         printf("No cycle found\n");
     }
 
-    if (hamiltonian(graph2, path, 5, 0, 1)) {
+    if (hamiltonian(graph, path, 5, 0, 1)) {
         printf("Hamiltonian path found: ");
         // prints the cycle
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 4; i++)
             printf("%d ", path[i]);
         printf("\n");
     } else {
         printf("No path found\n");
     }
+
+    if (isConnected(graph, 5))
+        printf("It is connected\n");
+    else
+        printf("It is NOT connected\n");
 
     return 0;
 }
