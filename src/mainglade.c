@@ -7,6 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "logic.h"
+#include <time.h>
 
 
 // VARIABLES GLOBALES
@@ -445,6 +446,58 @@ void clear_graph_matrix(int size) {
     //    clear_grid(builder);
 }
 
+// LATEX //
+
+// Cargar Booleanos en Struct
+void load_booleans_graph(Graph *g) {
+    int path[SIZE];
+    for (int i = 0; i < SIZE; i++) path[i] = -1;
+
+    g->isConnected = isConnected(g->graph, g->order);
+
+    if (g->isDirected) {
+        // Directed graph: use directed Eulerian functions
+        g->isEulerian = eulerianCycleDirected(g->graph, g->order);
+        g->isSemiEulerian = eulerianPathDirected(g->graph, g->order);
+    } else {
+        // Undirected graph
+        g->isEulerian = eulerianCycle(g->graph, g->order);
+        g->isSemiEulerian = eulerianPath(g->graph, g->order);
+    }
+
+    // Hamiltonian cycle check
+    g->isHamilton = hamiltonian(g->graph, path, g->order, 1, 0);
+}
+
+// Latex Builder
+void latex_builder(const char *filename, const Graph *g) {
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        g_warning("Failed to open LaTeX file for writing");
+        return;
+    }
+    fprintf(file, "\\documentclass{article}\n\\begin{document}\n");
+    fprintf(file, "Graph properties:\\newline\n");
+    fprintf(file, "Directed: %s\\newline\n", g->isDirected ? "Yes" : "No");
+    fprintf(file, "Eulerian: %s\\newline\n", g->isEulerian ? "Yes" : "No");
+    fprintf(file, "Semi-Eulerian: %s\\newline\n", g->isSemiEulerian ? "Yes" : "No");
+    fprintf(file, "Hamiltonian: %s\\newline\n", g->isHamilton ? "Yes" : "No");
+    fprintf(file, "Connected: %s\\newline\n", g->isConnected ? "Yes" : "No");
+    fprintf(file, "\\end{document}\n");
+    fclose(file);
+}
+
+// Nombre Diferente
+void generate_datetime_filename_prefix(char *buffer, size_t length) {
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    if (t) {
+        strftime(buffer, length, "%Y%m%d_%H%M%S", t);
+    } else {
+        // fallback
+        snprintf(buffer, length, "output");
+    }
+}
 
 // WIDGETS //
 
@@ -463,51 +516,30 @@ void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
 // Botón "LaTeX" / Verificar Hamiltoniano
 void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
-
     GtkBuilder *builder = (GtkBuilder *)user_data;
-    
-    // get current size from spin button
-    GtkSpinButton *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "IDSpin"));
-    int current_order = gtk_spin_button_get_value_as_int(IDSpin);
-    
-    // update currentGraph with the interface data
-    currentGraph.order = current_order;
-    
-    for (int row = 0; row < current_order; row++) {
-        for (int col = 0; col < current_order; col++) {
-            const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
-            if (text && strcmp(text, "1") == 0)
-                currentGraph.graph[row][col] = 1;
-            else
-                currentGraph.graph[row][col] = 0;
-        }
-    }
 
-    int path[current_order];
-    path[0] = 0;
-    printf("Graph matrix:\n");
-    printGraph(currentGraph.graph, current_order);
+    // Llama Función mágica
+    load_booleans_graph(&currentGraph);
 
-    // CYCLE
-    if (hamiltonian(currentGraph.graph, path, current_order, 1, 0)) {
-        printf("Hamiltonian cycle found: ");
-        // prints the cycle
-        for (int i = 0; i < current_order; i++)
-            printf("%d ", path[i]);
-        printf("%d ", path[0]);
-        printf("\n");
-    } else
-        printf("No cycle found\n");
+    // Generar un Nombre Diferente
+    char filename_prefix[32];
+    generate_datetime_filename_prefix(filename_prefix, sizeof(filename_prefix));
 
-    // PATH
-    if (hamiltonian(currentGraph.graph, path, current_order, 0, 1)) {
-        printf("Hamiltonian path found: ");
-        // prints the cycle
-        for (int i = 0; i < current_order; i++)
-            printf("%d ", path[i]);
-        printf("\n");
-    } else
-        printf("No path found\n");
+    // Build LaTeX filename and PDF filename
+    char tex_filename[64];
+    char pdf_filename[64];
+    snprintf(tex_filename, sizeof(tex_filename), "Files_PDF/%s.tex", filename_prefix);
+    snprintf(pdf_filename, sizeof(pdf_filename), "Files_PDF/%s.pdf", filename_prefix);
+
+    // Build LaTeX file
+    latex_builder(tex_filename, &currentGraph);
+
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "pdflatex -output-directory=Files_PDF %s && rm Files_PDF/%s.aux Files_PDF/%s.log", tex_filename, filename_prefix, filename_prefix);
+    system(cmd);
+
+    snprintf(cmd, sizeof(cmd), "evince %s &", pdf_filename);
+    system(cmd);
 }
 
 // Botón "Cargar"
