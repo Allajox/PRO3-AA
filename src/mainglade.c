@@ -139,10 +139,10 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
     (void)new_text_length;
     (void)position;
     (void)user_data;
+    
     // allow a single character '0' or '1'. If the entry already contains one
     // character and there's no selection, replace the existing character so
     // the user can type '1' directly (no need to select/delete first).
-    
     if (gtk_entry_get_text_length(GTK_ENTRY(editable)) >= 1) {
         gint sel_start, sel_end;
         if (!gtk_editable_get_selection_bounds(editable, &sel_start, &sel_end) || sel_end - sel_start <= 0) {
@@ -161,28 +161,6 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
             //return;
         }
         // if there is a selection, allow the insertion (it will replace selected text)
-    }
-
-    // if the cell is 0, nothing happens
-    // without this, if the nodes' limit (current_size) has been reached
-    // and the user tries to write on the diagonal, the program crashes
-    if (new_text[0] == '0') {
-        return;
-    }
-
-    // counts the number of nodes (1's) until it reaches the limit
-    int nodes = 0;
-    for (int row = 0; row < current_size; row++) {
-        for (int col = 0; col < current_size; col++) {
-            const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
-            if (strcmp(text, "1") == 0)
-               nodes++;
-        }
-    }
-
-    if (nodes == current_size) {
-        g_signal_stop_emission_by_name(editable, "insert-text");
-        return;
     }
 }
 
@@ -696,8 +674,7 @@ void on_spin_order_changed(GtkSpinButton *spin_button, GtkBuilder *builder) {
 }
 
 // MAIN
-/*
-int main(int argc, char *argv[]) {
+/*int main(int argc, char *argv[]) {
 
     // Builder
     GtkBuilder  *builder;
@@ -765,4 +742,5 @@ int main(int argc, char *argv[]) {
     gtk_widget_show_all(window);
     gtk_main();
     return 0;
-}*/
+}
+*/

@@ -89,7 +89,7 @@ int eulerian(int graph[SIZE][SIZE], int size) {
         return 1;
 }
 
-
+/**/
 int main() {
     // HAS PATH AND CYCLE
     int graph[SIZE][SIZE] = {
