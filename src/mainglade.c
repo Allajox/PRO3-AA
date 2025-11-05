@@ -466,7 +466,8 @@ void load_booleans_graph(Graph *g) {
     }
 
     // Hamiltonian cycle check
-    g->isHamilton = hamiltonian(g->graph, path, g->order, 1, 0);
+    g->hasHamiltonCycle = hamiltonian(g->graph, path, g->order, 1, 0);
+    g->hasHamiltonPath = hamiltonian(g->graph, path, g->order, 0, 1);
 }
 
 // Latex Builder
@@ -598,6 +599,12 @@ void latex_builder(const char *filename, const Graph *g) {
 
         "\\newpage\n"
         "\\section{Graph properties}\n"
+        //"\\Graph properties:\\newline\n"
+        //"\\Directed: %s\\newline\n", g->isDirected ? "Yes" : "No"
+        //"\\Eulerian: %s\\newline\n", g->isEulerian ? "Yes" : "No"
+        //"\\Semi-Eulerian: %s\\newline\n", g->isSemiEulerian ? "Yes" : "No"
+        //"\\Hamiltonian: %s\\newline\n", g->isHamilton ? "Yes" : "No"
+        //"\\Connected: %s\\newline\n", g->isConnected ? "Yes" : "No"
         "\\end{document}\n"
     );
 
@@ -683,7 +690,7 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
         "&& (cd Files_PDF && biber \"%s\") "
         "&& pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
         "&& pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
-        "&& xdg-open \"Files_PDF/%s.pdf\" >/dev/null 2>&1'",
+        "&& evince \"Files_PDF/%s.pdf\" >/dev/null 2>&1'",
         tex_filename, filename_prefix, tex_filename, tex_filename, filename_prefix);
 
     GError *gerr = NULL;
