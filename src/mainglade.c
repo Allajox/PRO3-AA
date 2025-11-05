@@ -502,9 +502,6 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\fancyhead[R]{Josu\\'e Hidalgo \\& Allan Jim\\'enez}\n"
         "\\fancyfoot[R]{Page \\thepage\\ of \\pageref{LastPage}}\n\n"
 
-        "\\usepackage[backend=biber,style=ieee]{biblatex}\n"
-        "\\addbibresource{references.bib}\n\n"
-
         "\\begin{document}\n\n"
 
         "\\title{\n"
@@ -643,7 +640,6 @@ void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
 void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     (void)user_data;
-    //GtkBuilder *builder = (GtkBuilder *)user_data;
 
     // Llama Función mágica
     load_booleans_graph(&currentGraph);
@@ -659,45 +655,23 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     // Asegura que exista el directorio Files_PDF
     g_mkdir_with_parents("Files_PDF", 0755);
 
-    // Si existe .referencec.bib en Files_PDF, copiarlo a references.bib
-    char ref_src[256];
-    char ref_dst[256];
-    snprintf(ref_src, sizeof(ref_src), "Files_PDF/.referencec.bib");
-    snprintf(ref_dst, sizeof(ref_dst), "Files_PDF/references.bib");
-
-    if (g_file_test(ref_src, G_FILE_TEST_EXISTS)) {
-        gchar *content = NULL;
-        GError *err = NULL;
-        if (g_file_get_contents(ref_src, &content, NULL, &err)) {
-            GError *err2 = NULL;
-            if (!g_file_set_contents(ref_dst, content, -1, &err2)) {
-                g_warning("No se pudo escribir %s: %s", ref_dst, err2->message);
-                g_error_free(err2);
-            }
-            g_free(content);
-        } else {
-            g_warning("No se pudo leer %s: %s", ref_src, err->message);
-            g_error_free(err);
-        }
-    }
-
-    // Build LaTeX file (solo generar .tex, no compilar ni abrir)
+    // Generar archivo LaTeX
     latex_builder(tex_filename, &currentGraph);
 
-    char cmd[1024];
+    // Ejecutar pdflatex una sola vez y abrir PDF con evince
+    char cmd[512];
     snprintf(cmd, sizeof(cmd),
         "bash -c 'pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
-        "&& (cd Files_PDF && biber \"%s\") "
-        "&& pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
-        "&& pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
-        "&& evince \"Files_PDF/%s.pdf\" >/dev/null 2>&1'",
-        tex_filename, filename_prefix, tex_filename, tex_filename, filename_prefix);
+        "&& evince \"Files_PDF/%s.pdf\" >/dev/null 2>&1 "
+        "&& rm Files_PDF/*.aux Files_PDF/*.log'",
+        tex_filename, filename_prefix);
 
     GError *gerr = NULL;
     if (!g_spawn_command_line_async(cmd, &gerr)) {
         g_warning("No se pudo lanzar la compilación/visor: %s", gerr ? gerr->message : "unknown");
         if (gerr) g_error_free(gerr);
-    }}
+    }
+}
 
 // Botón "Cargar"
 void on_load_button_clicked(GtkButton *button, gpointer user_data) {
