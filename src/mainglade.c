@@ -485,6 +485,7 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\documentclass[12pt]{article}\n\n"
         "%% ==== PACKAGES NECESARIOS ====\n"
         "\\usepackage{fancyhdr}\n"
+        "\\usepackage{adjustbox}\n"
         "\\usepackage{lastpage}\n"
         "\\usepackage{setspace}\n"
         "\\usepackage[T1]{fontenc}\n"
@@ -501,7 +502,6 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\fancyhf{}\n"
         "\\setlength\\headheight{15pt}\n"
         "\\fancyhead[R]{Josu\\'e Hidalgo \\& Allan Jim\\'enez}\n"
-        "\\fancyfoot[R]{Page \\thepage\\ of \\pageref{LastPage}}\n\n"
 
         "\\begin{document}\n\n"
 
@@ -575,11 +575,41 @@ void latex_builder(const char *filename, const Graph *g) {
         "For undirected graphs, every vertex needs to have an even degree for them to have an Eulerian cycle; for an Eulerian path, exactly two vertices need to have an odd degree.\n\n"
 
         "\\newpage\n\n"
+
+        "\\section{Explanation of Colors}\n"
+        "\\begin{center}\n"
+        "\\begin{tikzpicture}[\n"
+        "    %% ==== Definici\\'on de estilos ====\n"
+        "    NotDirectedEven/.style={circle, draw=black, fill=white, very thick, minimum size=8mm},\n"
+        "    NotDirectedOdd/.style={circle, draw=black, fill=black, very thick, minimum size=8mm, text=white},\n"
+        "    DirectedEvenInEvenOut/.style={circle, draw=red!80!black, fill=red!30, very thick, minimum size=8mm},\n"
+        "    DirectedEvenInOddOut/.style={circle, draw=violet!80!black, fill=violet!40, very thick, minimum size=8mm},\n"
+        "    DirectedOddInEvenOut/.style={circle, draw=purple!80!black, fill=purple!40, very thick, minimum size=8mm, text=white},\n"
+        "    DirectedOddInOddOut/.style={circle, draw=blue!80!black, fill=blue!40, very thick, minimum size=8mm, text=white}\n"
+        "]\n"
+        "\\node[NotDirectedEven] (A) at (0,0) {A};\n"
+        "\\node[NotDirectedOdd] (B) at (2,0) {B};\n"
+        "\\node[DirectedEvenInEvenOut] (C) at (4,0) {C};\n"
+        "\\node[DirectedEvenInOddOut] (D) at (6,0) {D};\n"
+        "\\node[DirectedOddInEvenOut] (E) at (8,0) {E};\n"
+        "\\node[DirectedOddInOddOut] (F) at (10,0) {F};\n"
+        "\\end{tikzpicture}\\n"
+        "\\end{center}\\n\\n"
+        "\\vspace{0.5cm}\\n"
+        "\\begin{description}\\n"
+        "    \\item[A:] It is a Undirected Node with Even Degree.\\n"
+        "    \\item[B:] It is a Undirected Node with Odd Degree.\\n"
+        "    \\item[C:] It is a Directed Node with Even Degree Input and Even Degree Output.\\n"
+        "    \\item[D:] It is a Directed Node with Even Degree Input and Odd Degree Output.\\n"
+        "    \\item[E:] It is a Directed Node with Odd Degree Input and Even Degree Output.\\n"
+        "    \\item[F:] It is a Directed Node with Odd Degree Input and Odd Degree Output.\\n"
+        "\\end{description}\\n"
+        
     );
 
     fprintf(file,
         "\\section{Generated graph}\n"
-        "\\begin{center}\n"
+        "\\begin{adjustbox}{max width = \\textwidth, max height = \\textheight}\n"
         "\\begin{tikzpicture}[\n"
         "NotDirectedEven/.style={circle, draw=black, fill=white, very thick, minimum size=8mm},\n"
         "NotDirectedOdd/.style={circle, draw=black, fill=black, very thick, minimum size=8mm, text=white},\n"
@@ -647,7 +677,7 @@ void latex_builder(const char *filename, const Graph *g) {
 
     fprintf(file,
         "\\end{tikzpicture}\n"
-        "\\end{center}\n\n"
+        "\\end{adjustbox}\n"
 
         "\\newpage\n"
         "\\section{Graph properties}\n"
