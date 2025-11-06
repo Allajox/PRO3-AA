@@ -598,44 +598,46 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\section{Graph properties}\n"
     );
 
+    // ===========================================================================================
+    // all this section is to write the graph's properties
+
     if (g->hasHamiltonCycle)
-        fprintf(file, "It has a hamiltonian cycle because there's a path from a starting vertex that visits all the others once and ends up in the starting one.\n");
+        fprintf(file, "It has a hamiltonian cycle because there's a path from a starting vertex that visits all the others once and ends up in the starting one.\\\\\n");
     else 
-        fprintf(file, "It doesn't have a hamiltonian cycle because there's no way to visit every vertex once and end in the starting one.\n");
+        fprintf(file, "It doesn't have a hamiltonian cycle because there's no way to visit every vertex once and end in the starting one.\\\\\n");
 
     if (g->hasHamiltonPath)
-        fprintf(file, "It has a hamiltonian path because theres a way to visit every vertex without repetition.\n");
+        fprintf(file, "It has a hamiltonian path because there's a way to visit every vertex without repetition.\\\\\n");
     else 
-        fprintf(file, "It doesn't have a hamiltonian path because there's no way to visit every vertex without repeting at least one.\n");
+        fprintf(file, "It doesn't have a hamiltonian path because there's no way to visit every vertex without repeting at least one.\\\\\n");
         
     if (g->isDirected) {
         if (g->isEulerian && g->isConnected)
-            fprintf(file, "It's Eulerian because it's connected and all nodes' out degree is the same as its in degree.\n");
+            fprintf(file, "It's Eulerian because it's connected and all nodes' out degree is the same as its in degree.\\\\\n");
         else if (!g->isEulerian && g->isConnected)
-            fprintf(file, "It's not Eulerian because at least one node's out degree is different from its in degree.\n");
+            fprintf(file, "It's not Eulerian because at least one node's out degree is different from its in degree.\\\\\n");
         else if (g->isEulerian && !g->isConnected)
-            fprintf(file, "It's not Eulerian because the graph is not connected.\n");
+            fprintf(file, "It's not Eulerian because the graph is not connected.\\\\\n");
 
         if (g->isSemiEulerian)
-            fprintf(file, "It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\n");
+            fprintf(file, "It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\\\\\n");
         else 
-            fprintf(file, "It's not semi-Eulerian because there's more than 2 nodes with different out and in degrees.\n");
+            fprintf(file, "It's not semi-Eulerian because there's more than 2 nodes with different out and in degrees.\\\\\n");
     }
     // for undirected graphs
     else {
         if (g->isEulerian && g->isConnected)
-            fprintf(file, "It's Eulerian because it's connected and all nodes have even degree.\n");
+            fprintf(file, "It's Eulerian because it's connected and all nodes have even degree.\\\\\n");
         else if (!g->isEulerian && g->isConnected)
-            fprintf(file, "It's not Eulerian because at least one node has an odd degree.\n");
+            fprintf(file, "It's not Eulerian because at least one node has an odd degree.\\\\\n");
         else if (g->isEulerian && !g->isConnected)
-            fprintf(file, "It's not Eulerian because the graph is not connected.\n");
+            fprintf(file, "It's not Eulerian because the graph is not connected.\\\\\n");
 
         if (g->isSemiEulerian)
-            fprintf(file, "It's semi-Eulerian because it has exactly 2 odd degree nodes.\n");
+            fprintf(file, "It's semi-Eulerian because it has exactly 2 odd degree nodes.\\\\\n");
         else 
-            fprintf(file, "It's not semi-Eulerian because it doesn't have exactly 2 odd degree nodes.\n");
+            fprintf(file, "It's not semi-Eulerian because it doesn't have exactly 2 odd degree nodes.\\\\\n");
     }
-
 
     fprintf(file, "\\end{document}\n");
 
