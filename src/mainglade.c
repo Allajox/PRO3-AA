@@ -656,42 +656,38 @@ void latex_builder(const char *filename, const Graph *g) {
     // ===========================================================================================
     // all this section is to write the graph's properties
 
-    if (g->hasHamiltonCycle)
-        fprintf(file, "It has a hamiltonian cycle because there's a path from a starting vertex that visits all the others once and ends up in the starting one.\\\\\n");
-    else 
-        fprintf(file, "It doesn't have a hamiltonian cycle because there's no way to visit every vertex once and end in the starting one.\\\\\n");
+    if (g->isConnected){
+        fprintf(file, "\\subsection{Hamiltonian?}\n");
+        fprintf(file, "\\begin{itemize}\n");
+        if(g->hasHamiltonCycle){
+            fprintf(file, "\\item The graph has a hamiltonian cycle.\\\\\n");
+            fprintf(file, "\\item There's a path from a starting vertex that visits all the others once and ends up in the starting one.\\\\\n");
+        } else if (g->hasHamiltonPath){
+            fprintf(file, "\\item The graph has a hamiltonian path but not a hamiltonian cycle because at least one vertex has degree less than 2.\\\\\n");
+            fprintf(file, "\\item There's a way to visit every vertex without repetition, but this way does not return to the starting vertex.\\\\\n");
+        } else {
+            fprintf(file, "\\item The graph is connected but doesn't have a hamiltonian cycle nor a hamiltonian path.\\\\\n");
+        }
+        fprintf(file, "\\end{itemize}\n");
 
-    if (g->hasHamiltonPath)
-        fprintf(file, "It has a hamiltonian path because there's a way to visit every vertex without repetition.\\\\\n");
-    else 
-        fprintf(file, "It doesn't have a hamiltonian path because there's no way to visit every vertex without repeting at least one.\\\\\n");
-        
-    if (g->isDirected) {
-        if (g->isEulerian && g->isConnected)
-            fprintf(file, "It's Eulerian because it's connected and all nodes' out degree is the same as its in degree.\\\\\n");
-        else if (!g->isEulerian && g->isConnected)
-            fprintf(file, "It's not Eulerian because at least one node's out degree is different from its in degree.\\\\\n");
-        else if (g->isEulerian && !g->isConnected)
-            fprintf(file, "It's not Eulerian because the graph is not connected.\\\\\n");
-
-        if (g->isSemiEulerian)
-            fprintf(file, "It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\\\\\n");
-        else 
-            fprintf(file, "It's not semi-Eulerian because there's more than 2 nodes with different out and in degrees.\\\\\n");
+        fprintf(file, "\\subsection{Eulerian?}\n");
+        fprintf(file, "\\begin{itemize}\n");
+        if (g->isEulerian){
+            fprintf(file, "\\item The graph has an eulerian cycle, it means the graph is in fact Eulerian.\\\\\n");
+            fprintf(file, "\\item It's connected and all nodes' out degree is the same as its in degree.\\\\\n");
+        } else if (g->isSemiEulerian){
+            fprintf(file, "\\item The graph has an eulerian path but not an eulerian cycle because it has exactly 2 vertices with odd degree, it is in fact Semi-Eulerian.\\\\\n");
+            fprintf(file, "\\item It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\\\\\n");
+        } else {
+            fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
+        }
+        fprintf(file, "\\end{itemize}\n");
     }
-    // for undirected graphs
     else {
-        if (g->isEulerian && g->isConnected)
-            fprintf(file, "It's Eulerian because it's connected and all nodes have even degree.\\\\\n");
-        else if (!g->isEulerian && g->isConnected)
-            fprintf(file, "It's not Eulerian because at least one node has an odd degree.\\\\\n");
-        else if (g->isEulerian && !g->isConnected)
-            fprintf(file, "It's not Eulerian because the graph is not connected.\\\\\n");
-
-        if (g->isSemiEulerian)
-            fprintf(file, "It's semi-Eulerian because it has exactly 2 odd degree nodes.\\\\\n");
-        else 
-            fprintf(file, "It's not semi-Eulerian because it doesn't have exactly 2 odd degree nodes.\\\\\n");
+        fprintf(file, "\\subsection{Graph is not connected}\n");
+        fprintf(file, "\\begin{itemize}\n");
+        fprintf(file, "\\item The graph is not connected, therefore it can't have a hamiltonian cycle nor path, nor an eulerian cycle nor path.\\\\\n");
+        fprintf(file, "\\end{itemize}\n");
     }
 
     fprintf(file, "\\end{document}\n");
@@ -731,6 +727,41 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
 
     // Llama Función mágica
     load_booleans_graph(&currentGraph);
+
+    // Obtiene la Matriz desde el Grid
+    for (int row = 0; row < currentGraph.order; row++) {
+        for (int col = 0; col < currentGraph.order; col++) {
+            const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
+            if (text && strlen(text) > 0 && isdigit(text[0])) {
+                currentGraph.graph[row][col] = atoi(text);
+            } else {
+                currentGraph.graph[row][col] = 0;
+            }
+        }
+    }
+
+    // Obtiene la matriz de coordenadas desde el grid de coordenadas (si existe)
+    if (coo_entries) {
+        for (int i = 0; i < currentGraph.order; i++) {
+            const char *sx = gtk_entry_get_text(GTK_ENTRY(coo_entries[i][0]));
+            const char *sy = gtk_entry_get_text(GTK_ENTRY(coo_entries[i][1]));
+            int vx = 0, vy = 0;
+            if (sx && *sx != '\0') {
+                char *endptr;
+                long lx = strtol(sx, &endptr, 10);
+                if (*endptr == '\0' && lx > 0) vx = (int)lx;
+            }
+            if (sy && *sy != '\0') {
+                char *endptr;
+                long ly = strtol(sy, &endptr, 10);
+                if (*endptr == '\0' && ly > 0) vy = (int)ly;
+            }
+            currentGraph.coords[i].x = vx;
+            currentGraph.coords[i].y = vy;
+        }
+    } else {
+        for (int i = 0; i < currentGraph.order; i++) { currentGraph.coords[i].x = 0; currentGraph.coords[i].y = 0; }
+    }
 
     // Generar un Nombre Diferente
     char filename_prefix[32];
