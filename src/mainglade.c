@@ -502,6 +502,7 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\fancyhf{}\n"
         "\\setlength\\headheight{15pt}\n"
         "\\fancyhead[R]{Josu\\'e Hidalgo \\& Allan Jim\\'enez}\n"
+        "\\fancyfoot[C]{\\thepage}\n"
 
         "\\begin{document}\n\n"
 
@@ -523,9 +524,6 @@ void latex_builder(const char *filename, const Graph *g) {
 
         "\\maketitle\n"
         "\\thispagestyle{empty}\n"
-        "\\clearpage\n"
-        "\\pagenumbering{arabic}\n"
-        "\\setcounter{page}{1}\n"
         "\\newpage\n\n"
 
         "\\section{William Rowan Hamilton}\n"
