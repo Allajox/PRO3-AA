@@ -99,20 +99,26 @@ For undirected graphs, every vertex needs to have an even degree for them to hav
 
 \section{Generated graph}
 \begin{center}
-\begin{tikzpicture}
-\node[draw, rounded corners=5pt, thick, minimum width=13.5cm, minimum height=18cm, align=center] (box) {
-    \textbf{Your Graph} \\[1em]
-    % === Graph ===
-    \begin{tikzpicture}[scale=1.5, every node/.style={circle, draw, thick, minimum size=8mm}]
-        % Nodes
-        \node (1) at (0,1) {1};
-        \node (2) at (2,0) {2};
-        \node (3) at (4,2) {3};
-
-        % Edges
-        \draw[thick] (1) -- (2);
-        \draw[thick] (2) -- (3);
-    \end{tikzpicture}
+\begin{tikzpicture}[
+NotDirectedEven/.style={circle, draw=black, fill=white, very thick, minimum size=8mm},
+NotDirectedOdd/.style={circle, draw=black, fill=black, very thick, minimum size=8mm, text=white},
+DirectedEvenInEvenOut/.style={circle, draw=red!80!black, fill=red!30, very thick, minimum size=8mm},
+DirectedEvenInOddOut/.style={circle, draw=violet!80!black, fill=violet!40, very thick, minimum size=8mm},
+DirectedOddInEvenOut/.style={circle, draw=purple!80!black, fill=purple!40, very thick, minimum size=8mm, text=white},
+DirectedOddInOddOut/.style={circle, draw=blue!80!black, fill=blue!40, very thick, minimum size=8mm, text=white}
+]
+% === NODOS === 
+\node[NotDirectedEven] (N1) at (10,2) {1};
+\node[NotDirectedEven] (N2) at (3,4) {2};
+\node[NotDirectedOdd] (N3) at (5,6) {3};
+\node[NotDirectedEven] (N4) at (7,1) {4};
+\node[NotDirectedOdd] (N5) at (8,1) {5};
+% === ARISTAS === 
+\draw[<->, thick] (N1) -- (N2);
+\draw[<->, thick] (N1) -- (N4);
+\draw[<->, thick] (N2) -- (N5);
+\draw[<->, thick] (N3) -- (N4);
+\end{tikzpicture}
 };
 \end{tikzpicture}
 \end{center}
@@ -120,7 +126,7 @@ For undirected graphs, every vertex needs to have an even degree for them to hav
 \newpage
 \section{Graph properties}
 It doesn't have a hamiltonian cycle because there's no way to visit every vertex once and end in the starting one.\\
-It doesn't have a hamiltonian path because there's no way to visit every vertex without repeting at least one.\\
-It's not Eulerian because the graph is not connected.\\
-It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\\
+It has a hamiltonian path because there's a way to visit every vertex without repetition.\\
+It's not Eulerian because at least one node has an odd degree.\\
+It's semi-Eulerian because it has exactly 2 odd degree nodes.\\
 \end{document}
