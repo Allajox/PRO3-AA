@@ -298,7 +298,6 @@ void setup_grid(GtkBuilder *builder, int size) {
     }
 
     currentGraph.order = size;
-    fprintf(stdout, "Setting up graph matrix of size %d x %d\n", size, size);
     current_size = size;
     
     // initialize the matrix with entries
@@ -746,9 +745,6 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
 
     // Generar archivo LaTeX
     latex_builder(tex_filename, &currentGraph);
-
-    printf("%s\n", tex_filename);
-    printf("%s\n", filename_prefix);
 
     // compilar latex en pdf
     char cmd[512];
