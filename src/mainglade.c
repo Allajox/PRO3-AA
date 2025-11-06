@@ -640,15 +640,13 @@ void latex_builder(const char *filename, const Graph *g) {
         } else {
             for (int j = i; j < currentGraph.order; j++) {
                 if (currentGraph.graph[i][j] == 1) {
-                    fprintf(file, "\\draw[<->, thick] (N%d) -- (N%d);\n", i+1, j+1);
+                    fprintf(file, "\\draw[--, thick] (N%d) -- (N%d);\n", i+1, j+1);
                 }
             }
         }
     }
 
     fprintf(file,
-        "\\end{tikzpicture}\n"
-        "};\n"
         "\\end{tikzpicture}\n"
         "\\end{center}\n\n"
 
@@ -749,13 +747,24 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     // Generar archivo LaTeX
     latex_builder(tex_filename, &currentGraph);
 
-    // Ejecutar pdflatex una sola vez y abrir PDF con evince
+    printf("%s\n", tex_filename);
+    printf("%s\n", filename_prefix);
+
+    // compilar latex en pdf
     char cmd[512];
     snprintf(cmd, sizeof(cmd),
-        "bash -c 'pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" "
-        "&& evince \"Files_PDF/%s.pdf\" >/dev/null 2>&1 "
+    "bash -c 'pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" >/dev/null 2>&1'", 
+    tex_filename);
+    system(cmd);
+
+    char cmd2[512];
+
+    // Segundo comando: abrir PDF y limpiar
+    snprintf(cmd2, sizeof(cmd2),
+        "bash -c 'evince \"Files_PDF/%s.pdf\" >/dev/null 2>&1 "
         "&& rm Files_PDF/*.aux Files_PDF/*.log'",
-        tex_filename, filename_prefix);
+        filename_prefix);
+    system(cmd2);
 
     GError *gerr = NULL;
     if (!g_spawn_command_line_async(cmd, &gerr)) {
