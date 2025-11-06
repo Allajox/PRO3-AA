@@ -19,6 +19,7 @@ typedef struct {
     int order;
     int graph[SIZE][SIZE];
     Coo coords[SIZE];
+    
     int isConnected;
     int isDirected;
     int isEulerian;

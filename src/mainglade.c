@@ -297,6 +297,8 @@ void setup_grid(GtkBuilder *builder, int size) {
         return;
     }
 
+    currentGraph.order = size;
+    fprintf(stdout, "Setting up graph matrix of size %d x %d\n", size, size);
     current_size = size;
     
     // initialize the matrix with entries
@@ -574,22 +576,78 @@ void latex_builder(const char *filename, const Graph *g) {
         "For undirected graphs, every vertex needs to have an even degree for them to have an Eulerian cycle; for an Eulerian path, exactly two vertices need to have an odd degree.\n\n"
 
         "\\newpage\n\n"
+    );
 
+    fprintf(file,
         "\\section{Generated graph}\n"
         "\\begin{center}\n"
-        "\\begin{tikzpicture}\n"
-        "\\node[draw, rounded corners=5pt, thick, minimum width=13.5cm, minimum height=18cm, align=center] (box) {\n"
-        "    \\textbf{Your Graph} \\\\[1em]\n"
-        "    %% === Graph ===\n"
-        "    \\begin{tikzpicture}[scale=1.5, every node/.style={circle, draw, thick, minimum size=8mm}]\n"
-        "        %% Nodes\n"
-        "        \\node (1) at (0,1) {1};\n"
-        "        \\node (2) at (2,0) {2};\n"
-        "        \\node (3) at (4,2) {3};\n\n"
-        "        %% Edges\n"
-        "        \\draw[thick] (1) -- (2);\n"
-        "        \\draw[thick] (2) -- (3);\n"
-        "    \\end{tikzpicture}\n"
+        "\\begin{tikzpicture}[\n"
+        "NotDirectedEven/.style={circle, draw=black, fill=white, very thick, minimum size=8mm},\n"
+        "NotDirectedOdd/.style={circle, draw=black, fill=black, very thick, minimum size=8mm, text=white},\n"
+        "DirectedEvenInEvenOut/.style={circle, draw=red!80!black, fill=red!30, very thick, minimum size=8mm},\n"
+        "DirectedEvenInOddOut/.style={circle, draw=violet!80!black, fill=violet!40, very thick, minimum size=8mm},\n"
+        "DirectedOddInEvenOut/.style={circle, draw=purple!80!black, fill=purple!40, very thick, minimum size=8mm, text=white},\n"
+        "DirectedOddInOddOut/.style={circle, draw=blue!80!black, fill=blue!40, very thick, minimum size=8mm, text=white}\n"
+        "]\n"
+    );
+
+    fprintf(file,"%% === NODOS === \n");
+
+    for (int i = 0; i < currentGraph.order; i++) {
+        int x = currentGraph.coords[i].x;
+        int y = currentGraph.coords[i].y;
+
+        if (g->isDirected) {
+            int indeg = 0;
+            int outdeg = 0;
+            for (int j = 0; j < currentGraph.order; j++) {
+                if (currentGraph.graph[j][i] == 1) indeg++;
+                if (currentGraph.graph[i][j] == 1) outdeg++;
+            }
+
+            if (indeg % 2 == 0 && outdeg % 2 == 0) {
+                fprintf(file, "\\node[DirectedEvenInEvenOut] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
+            } else if (indeg % 2 == 0 && outdeg % 2 != 0) {
+                fprintf(file, "\\node[DirectedEvenInOddOut] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
+            } else if (indeg % 2 != 0 && outdeg % 2 == 0) {
+                fprintf(file, "\\node[DirectedOddInEvenOut] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
+            } else {
+                fprintf(file, "\\node[DirectedOddInOddOut] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
+            }
+        } else {
+            int deg = 0;
+            for (int j = 0; j < currentGraph.order; j++) {
+                if (currentGraph.graph[i][j] == 1) deg++;
+            }
+
+            if (deg % 2 == 0) {
+                fprintf(file, "\\node[NotDirectedEven] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
+            } else {
+                fprintf(file, "\\node[NotDirectedOdd] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
+            }
+        }
+    }
+
+    fprintf(file,"%% === ARISTAS === \n");
+    
+    for (int i = 0; i < currentGraph.order; i++) {
+        if (g->isDirected) {
+            for (int j = 0; j < currentGraph.order; j++) {
+                if (currentGraph.graph[i][j] == 1) {
+                    fprintf(file, "\\draw[->, thick] (N%d) -- (N%d);\n", i+1, j+1);
+                }
+            }
+        } else {
+            for (int j = i; j < currentGraph.order; j++) {
+                if (currentGraph.graph[i][j] == 1) {
+                    fprintf(file, "\\draw[<->, thick] (N%d) -- (N%d);\n", i+1, j+1);
+                }
+            }
+        }
+    }
+
+    fprintf(file,
+        "\\end{tikzpicture}\n"
         "};\n"
         "\\end{tikzpicture}\n"
         "\\end{center}\n\n"
@@ -661,7 +719,6 @@ void generate_datetime_filename_prefix(char *buffer, size_t length) {
 // ComboBox "Type"
 void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
     (void)user_data;
-    //GtkBuilder *builder = (GtkBuilder *)user_data;
 
     int new_type = gtk_combo_box_get_active(combo_box);
     if (new_type != currentGraph.isDirected) {
