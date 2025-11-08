@@ -1,37 +1,23 @@
-
-
-// BIBLIOTECAS
-
-
+// LIBRARIES
 #include <gtk/gtk.h>
 #include <string.h>
 #include <ctype.h>
 #include "logic.h"
 #include <time.h>
 
+// GLOBAL VARIABLES
+Graph currentGraph;                 // struct defined in logic.h
+int current_size = 0;               // current graph size (number of nodes)
+gboolean isValidCoo = FALSE;        // indicates if the coordinates are valid
 
-// VARIABLES GLOBALES
-
-
-Graph currentGraph;         // Grafo actual (estructura definida en logic.h)
-int current_size = 0;       // Tamaño actual del grafo (número de nodos)
-gboolean isValidCoo = FALSE;// Indica si las coordenadas son válidas
-
-GtkWidget ***entries = NULL;      // Matriz de GtkEntry (matriz de adyacencia)
-GtkWidget ***coo_entries = NULL;  // Matriz de GtkEntry para coordenadas
-gboolean *coo_row_valid = NULL;   // Indica si una fila de coordenadas es válida
-gboolean *coo_row_dup = NULL;     // Indica si hay coordenadas duplicadas
+GtkWidget ***entries = NULL;        // GtkEntry matrix (adjacency matrix)
+GtkWidget ***coo_entries = NULL;    // GtkEntry matrix for coordinates
+gboolean *coo_row_valid = NULL;     // indicates if a row of coordinates is valid
+gboolean *coo_row_dup = NULL;       // indicates if there are duplicated coordinates
 GtkWidget *global_btn_save = NULL;
 GtkWidget *global_btn_latex = NULL;
 
-
-// FUNCIONES
-
-
-// VALIDACIONES
-
-
-// Validación de coordenadas
+// coordinates validation
 static void update_coo_states_and_ui(void) {
     if (!coo_entries || current_size <= 0) return;
 
@@ -127,7 +113,8 @@ static void update_coo_states_and_ui(void) {
     if (global_btn_latex)
         gtk_widget_set_sensitive(global_btn_latex, isValidCoo);
 }
-// Validación de celdas de la matriz de adyacencia
+
+// validates the input of the adjacency matrix
 void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length, 
                          gint *position, gpointer user_data) {
     (void)new_text_length;
@@ -150,7 +137,7 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
             }
             // DOESN'T SEEM TO BE NECESSARY
 
-            // stop default insertion (we already handled replacement or ignored it)
+            // stop default insertion
             //g_signal_stop_emission_by_name(editable, "insert-text");
             //return;
         }
@@ -158,7 +145,7 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
     }
 }
 
-// Validación de coordenadas (solo dígitos)
+// coordinates validation (only digits)
 void coo_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_length,
                           gint *position, gpointer user_data) {
     (void)new_text_length;
@@ -172,18 +159,17 @@ void coo_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text
         }
     }
 }
-// Validación de coordenadas (solo dígitos)
+
+// coordinates validation (only digits)
 void coo_entry_changed(GtkEditable *editable, gpointer user_data) {
     (void)user_data;
     (void)editable;
     update_coo_states_and_ui();
 }
 
+// MATRIX CREATION AND COORDINATES OF "ORDER" SIZE
 
-// CREACIÓN MATRIZ y COO DE TAMAÑO "ORDER"
-
-
-// Manejo de selección de celdas
+// cell selection handling
 gboolean coo_entry_focus_in(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
     (void)event;
     (void)user_data;
@@ -195,7 +181,7 @@ gboolean coo_entry_focus_in(GtkWidget *widget, GdkEvent *event, gpointer user_da
     return FALSE; // propagate
 }
 
-// Sincronización de la matriz de adyacencia
+// updates the cell, or cells in the case of an undirected graph
 void on_entry_changed(GtkEditable *editable, gpointer user_data) {
     GtkBuilder *builder = (GtkBuilder *)user_data;
 
@@ -231,7 +217,7 @@ void on_entry_changed(GtkEditable *editable, gpointer user_data) {
     }
 }
 
-// Limpieza de la interfaz
+// interface cleaning
 void clear_grid(GtkBuilder *builder) {
     // if there aren't any entries, return
     if (!entries) 
@@ -240,7 +226,7 @@ void clear_grid(GtkBuilder *builder) {
     GtkWidget *grid = GTK_WIDGET(gtk_builder_get_object(builder, "IDGrid"));
     if (!grid || !GTK_IS_GRID(grid)) return;
 
-    // delete all widgets from the grid
+    // deletes all widgets from the grid
     GList *children = gtk_container_get_children(GTK_CONTAINER(grid));
     for (GList *iter = children; iter != NULL; iter = g_list_next(iter))
         gtk_widget_destroy(GTK_WIDGET(iter->data));
@@ -265,9 +251,8 @@ void clear_grid(GtkBuilder *builder) {
 
     if (coo_entries) {
         for (int i = 0; i < current_size; i++) {
-            if (coo_entries[i]) {
+            if (coo_entries[i])
                 g_free(coo_entries[i]);
-            }
         }
         g_free(coo_entries);
         coo_entries = NULL;
@@ -285,7 +270,7 @@ void clear_grid(GtkBuilder *builder) {
     current_size = 0;
 }
 
-// Creación de la matriz y coordenadas
+// creates the matrix and the coordinates
 void setup_grid(GtkBuilder *builder, int size) {
     // clear the existing grid if one already exists
     if (entries)
@@ -293,18 +278,16 @@ void setup_grid(GtkBuilder *builder, int size) {
 
     // get the main grid
     GtkWidget *grid = GTK_WIDGET(gtk_builder_get_object(builder, "IDGrid"));
-    if (!grid || !GTK_IS_GRID(grid)) {
+    if (!grid || !GTK_IS_GRID(grid))
         return;
-    }
 
     currentGraph.order = size;
     current_size = size;
     
     // initialize the matrix with entries
     entries = g_malloc(size * sizeof(GtkWidget**));
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++)
         entries[i] = g_malloc(size * sizeof(GtkWidget*));
-    }
 
     // initialize coordinate entries matrix (size rows x 2 columns)
     coo_entries = g_malloc(size * sizeof(GtkWidget**));
@@ -334,15 +317,17 @@ void setup_grid(GtkBuilder *builder, int size) {
     static gboolean css_added = FALSE;
     if (!css_added) {
         GtkCssProvider *provider = gtk_css_provider_new();
+        
     const gchar *css = ".invalid entry, .invalid { background-color: #722F37; color: #ffffff; }";
         GError *err = NULL;
         gtk_css_provider_load_from_data(provider, css, -1, &err);
+
         if (!err) {
             GdkScreen *screen = gdk_screen_get_default();
             gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-        } else {
+        } else
             g_error_free(err);
-        }
+
         g_object_unref(provider);
         css_added = TRUE;
     }
@@ -392,7 +377,6 @@ void setup_grid(GtkBuilder *builder, int size) {
         update_coo_states_and_ui();
     }
 
-
     // create entries according to the specified size
     for (int row = 0; row < size; row++) {
         for (int col = 0; col < size; col++) {
@@ -430,16 +414,15 @@ void setup_grid(GtkBuilder *builder, int size) {
     gtk_widget_show_all(grid);
 }
 
-// Limpieza de la Matriz
+// matrix's cleaning
 void clear_graph_matrix(int size) {
     //GtkBuilder *builder = (GtkBuilder *)user_data;
     
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             currentGraph.graph[i][j] = 0;
-            if (entries && entries[i] && entries[i][j]) {
+            if (entries && entries[i] && entries[i][j])
                 gtk_entry_set_text(GTK_ENTRY(entries[i][j]), "");
-            }
         }
     }
 
@@ -447,9 +430,9 @@ void clear_graph_matrix(int size) {
     //    clear_grid(builder);
 }
 
-// LATEX //
+// LATEX
 
-// Cargar Booleanos en Struct
+// load booleans on a struct
 void load_booleans_graph(Graph *g) {
     int path[SIZE];
     for (int i = 0; i < SIZE; i++) path[i] = -1;
@@ -466,14 +449,13 @@ void load_booleans_graph(Graph *g) {
         g->isSemiEulerian = eulerianPath(g->graph, g->order);
     }
 
-    // Hamiltonian cycle check
+    // Hamiltonian cycle and path check
     g->hasHamiltonCycle = hamiltonian(g->graph, path, g->order, 1, 0);
     g->hasHamiltonPath = hamiltonian(g->graph, path, g->order, 0, 1);
 }
 
 // Latex Builder
 void latex_builder(const char *filename, const Graph *g) {
-
     FILE *file = fopen(filename, "w");
     
     if (!file) {
@@ -618,6 +600,7 @@ void latex_builder(const char *filename, const Graph *g) {
         "]\n"
     );
 
+    // ======================================================= NODES' CREATION =======================================================
     fprintf(file,"%% === NODOS === \n");
 
     for (int i = 0; i < currentGraph.order; i++) {
@@ -632,47 +615,44 @@ void latex_builder(const char *filename, const Graph *g) {
                 if (currentGraph.graph[i][j] == 1) outdeg++;
             }
 
-            if (indeg % 2 == 0 && outdeg % 2 == 0) {
+            if (indeg % 2 == 0 && outdeg % 2 == 0)
                 fprintf(file, "\\node[DirectedEvenInEvenOut] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
-            } else if (indeg % 2 == 0 && outdeg % 2 != 0) {
+            else if (indeg % 2 == 0 && outdeg % 2 != 0)
                 fprintf(file, "\\node[DirectedEvenInOddOut] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
-            } else if (indeg % 2 != 0 && outdeg % 2 == 0) {
+            else if (indeg % 2 != 0 && outdeg % 2 == 0)
                 fprintf(file, "\\node[DirectedOddInEvenOut] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
-            } else {
+            else
                 fprintf(file, "\\node[DirectedOddInOddOut] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
-            }
         } else {
             int deg = 0;
-            for (int j = 0; j < currentGraph.order; j++) {
+            for (int j = 0; j < currentGraph.order; j++)
                 if (currentGraph.graph[i][j] == 1) deg++;
-            }
 
-            if (deg % 2 == 0) {
+            if (deg % 2 == 0)
                 fprintf(file, "\\node[NotDirectedEven] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
-            } else {
+            else
                 fprintf(file, "\\node[NotDirectedOdd] (N%d) at (%d,%d) {%d};\n", i+1, x, y, i+1);
-            }
         }
     }
 
+    // ======================================================= EDGES =======================================================
     fprintf(file,"%% === ARISTAS === \n");
     
     for (int i = 0; i < currentGraph.order; i++) {
         if (g->isDirected) {
             for (int j = 0; j < currentGraph.order; j++) {
-                if (currentGraph.graph[i][j] == 1) {
+                if (currentGraph.graph[i][j] == 1)
                     fprintf(file, "\\draw[->, thick] (N%d) -- (N%d);\n", i+1, j+1);
-                }
             }
         } else {
             for (int j = i; j < currentGraph.order; j++) {
-                if (currentGraph.graph[i][j] == 1) {
+                if (currentGraph.graph[i][j] == 1)
                     fprintf(file, "\\draw[--, thick] (N%d) -- (N%d);\n", i+1, j+1);
-                }
             }
         }
     }
 
+    // ends the graph section
     fprintf(file,
         "\\end{tikzpicture}\n"
         "\\end{adjustbox}\n"
@@ -681,8 +661,7 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\section{Graph properties}\n"
     );
 
-    // ===========================================================================================
-    // all this section is to write the graph's properties
+    // ======================================================= GRAPH'S PROPERTIES =======================================================
 
     if (g->isConnected){
         fprintf(file, "\\subsection{Hamiltonian?}\n");
@@ -693,9 +672,9 @@ void latex_builder(const char *filename, const Graph *g) {
         } else if (g->hasHamiltonPath){
             fprintf(file, "\\item The graph has a hamiltonian path but not a hamiltonian cycle because at least one vertex has degree less than 2.\\\\\n");
             fprintf(file, "\\item There's a way to visit every vertex without repetition, but this way does not return to the starting vertex.\\\\\n");
-        } else {
+        } else
             fprintf(file, "\\item The graph is connected but doesn't have a hamiltonian cycle nor a hamiltonian path.\\\\\n");
-        }
+            
         fprintf(file, "\\end{itemize}\n");
 
         fprintf(file, "\\subsection{Eulerian?}\n");
@@ -706,9 +685,9 @@ void latex_builder(const char *filename, const Graph *g) {
         } else if (g->isSemiEulerian){
             fprintf(file, "\\item The graph has an eulerian path but not an eulerian cycle because it has exactly 2 vertices with odd degree, it is in fact Semi-Eulerian.\\\\\n");
             fprintf(file, "\\item It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\\\\\n");
-        } else {
+        } else
             fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
-        }
+
         fprintf(file, "\\end{itemize}\n");
     }
     else {
@@ -723,7 +702,7 @@ void latex_builder(const char *filename, const Graph *g) {
     fclose(file);
 }
 
-// Nombre Diferente
+// creates a different name for each file
 void generate_datetime_filename_prefix(char *buffer, size_t length) {
     time_t now = time(NULL);
     struct tm *t = localtime(&now);
@@ -735,7 +714,7 @@ void generate_datetime_filename_prefix(char *buffer, size_t length) {
     }
 }
 
-// WIDGETS //
+// WIDGETS
 
 // ComboBox "Type"
 void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
@@ -748,27 +727,26 @@ void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
     }
 }
 
-// Botón "LaTeX" / Verificar Hamiltoniano
+// LaTeX button / Verificar Hamiltoniano
 void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     (void)user_data;
 
-    // Llama Función mágica
+    // loads graph's characteristics
     load_booleans_graph(&currentGraph);
 
-    // Obtiene la Matriz desde el Grid
+    // obtain matrix from the Gtk grid
     for (int row = 0; row < currentGraph.order; row++) {
         for (int col = 0; col < currentGraph.order; col++) {
             const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
-            if (text && strlen(text) > 0 && isdigit(text[0])) {
+            if (text && strlen(text) > 0 && isdigit(text[0]))
                 currentGraph.graph[row][col] = atoi(text);
-            } else {
+            else
                 currentGraph.graph[row][col] = 0;
-            }
         }
     }
 
-    // Obtiene la matriz de coordenadas desde el grid de coordenadas (si existe)
+    // obtains the coordinates' matrix from the coordinates' grid (if it exists)
     if (coo_entries) {
         for (int i = 0; i < currentGraph.order; i++) {
             const char *sx = gtk_entry_get_text(GTK_ENTRY(coo_entries[i][0]));
@@ -787,11 +765,10 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
             currentGraph.coords[i].x = vx;
             currentGraph.coords[i].y = vy;
         }
-    } else {
+    } else
         for (int i = 0; i < currentGraph.order; i++) { currentGraph.coords[i].x = 0; currentGraph.coords[i].y = 0; }
-    }
 
-    // Generar un Nombre Diferente
+    // generates a different name
     char filename_prefix[32];
     generate_datetime_filename_prefix(filename_prefix, sizeof(filename_prefix));
 
@@ -799,13 +776,13 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     char tex_filename[64];
     snprintf(tex_filename, sizeof(tex_filename), "Files_PDF/%s.tex", filename_prefix);
 
-    // Asegura que exista el directorio Files_PDF
+    // validates that the directory Files_PDF exists
     g_mkdir_with_parents("Files_PDF", 0755);
 
-    // Generar archivo LaTeX
+    // generates LaTeX file
     latex_builder(tex_filename, &currentGraph);
 
-    // compilar latex en pdf
+    // first command: compile LaTeX into a pdf
     char cmd[512];
     snprintf(cmd, sizeof(cmd),
     "bash -c 'pdflatex -interaction=nonstopmode -output-directory=Files_PDF \"%s\" >/dev/null 2>&1'", 
@@ -814,9 +791,9 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
 
     char cmd2[512];
 
-    // Segundo comando: abrir PDF y limpiar
+    // second command: open PDF and delete .aux and .log files
     snprintf(cmd2, sizeof(cmd2),
-        "bash -c 'evince \"Files_PDF/%s.pdf\" >/dev/null 2>&1 "
+        "bash -c 'evince --presentation \"Files_PDF/%s.pdf\" >/dev/null 2>&1 "
         "&& rm Files_PDF/*.aux Files_PDF/*.log'",
         filename_prefix);
     system(cmd2);
@@ -828,7 +805,7 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     }
 }
 
-// Botón "Cargar"
+// load button
 void on_load_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     
@@ -905,7 +882,7 @@ void on_load_button_clicked(GtkButton *button, gpointer user_data) {
     gtk_widget_destroy(dialog);
 }
 
-// Botón "Guardar"
+// save button
 void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     GtkBuilder *builder = (GtkBuilder *)user_data;
@@ -927,19 +904,18 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
     currentGraph.isDirected = current_type;
     currentGraph.order = current_order;
         
-    // Obtiene la Matriz desde el Grid
+    // obtains matrix from the Gtk grid
     for (int row = 0; row < current_order; row++) {
         for (int col = 0; col < current_order; col++) {
             const char *text = gtk_entry_get_text(GTK_ENTRY(entries[row][col]));
-            if (text && strlen(text) > 0 && isdigit(text[0])) {
+            if (text && strlen(text) > 0 && isdigit(text[0]))
                 currentGraph.graph[row][col] = atoi(text);
-            } else {
+            else
                 currentGraph.graph[row][col] = 0;
-            }
         }
     }
 
-    // Obtiene la matriz de coordenadas desde el grid de coordenadas (si existe)
+    // obtains the coordinates' matrix from the coordinates' grid (if it exists)
     if (coo_entries) {
         for (int i = 0; i < current_order; i++) {
             const char *sx = gtk_entry_get_text(GTK_ENTRY(coo_entries[i][0]));
@@ -958,11 +934,10 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
             currentGraph.coords[i].x = vx;
             currentGraph.coords[i].y = vy;
         }
-    } else {
-        for (int i = 0; i < current_order; i++) { currentGraph.coords[i].x = 0; currentGraph.coords[i].y = 0; }
-    }
+    } else
+        for (int i = 0; i < current_order; i++) { currentGraph.coords[i].x = 0; currentGraph.coords[i].y = 0;
     
-    // PopUp para Guardar el Archivo
+    // PopUp to save the file
     GtkWidget *dialog = gtk_file_chooser_dialog_new("Save Graph",
                                                    GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))),
                                                    GTK_FILE_CHOOSER_ACTION_SAVE,
@@ -970,22 +945,22 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
                                                    "Save", GTK_RESPONSE_ACCEPT,
                                                    NULL);
     
-    // Nombre Default
+    // default name
     gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "NameYourGraph.bin");
     
-    // Filtro para que se vean únicamente los archivos .bin
+    // only show .bin files
     GtkFileFilter *filter = gtk_file_filter_new();
     gtk_file_filter_set_name(filter, "Graph files (*.bin)");
     gtk_file_filter_add_pattern(filter, "*.bin");
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
     
-    // Mostrar PopUp
+    // show PopUp
     gint result = gtk_dialog_run(GTK_DIALOG(dialog));
 
     if (result == GTK_RESPONSE_ACCEPT) {
         char *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         
-        // Siempre extension .bin
+        // always .bin extension
         if (!g_str_has_suffix(filename, ".bin")) {
             char *new_filename = g_strdup_printf("%s.bin", filename);
             g_free(filename);
@@ -1004,19 +979,19 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
             gtk_widget_destroy(error_dialog);
         }
 
-        // Cierra Archivo
+        // closes file
         g_free(filename);
     }
     gtk_widget_destroy(dialog);
 }
 
-// Cambio de tamaño (spin button)
+// size change (spin button)
 void on_spin_order_changed(GtkSpinButton *spin_button, GtkBuilder *builder) {
     int new_size = gtk_spin_button_get_value_as_int(spin_button);
     setup_grid(builder, new_size);
 }
 
-// Cierre de ventana
+// window closing
 void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
     // avoid warnings
     (void)widget;
@@ -1029,10 +1004,6 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
     gtk_main_quit();
 }
 
-
-// MAIN //
-
-
 // Main
 int main(int argc, char *argv[]) {
 
@@ -1041,35 +1012,36 @@ int main(int argc, char *argv[]) {
     GtkWidget   *window;
     gtk_init(&argc, &argv);
 
-    // Inicializar el builder
+    // initialize builde
     GError      *error = NULL;
     builder =   gtk_builder_new();
     
-    // Cargar el archivo de interfaz
+    // load glade file
     if (!gtk_builder_add_from_file(builder, "ui/Grafos.glade", &error)) {
         g_critical("Error al cargar el archivo Glade: %s", error->message);
         g_error_free(error);
         return 1;
     }
 
-    // Obtener la ventana principal (usando el ID correcto del archivo Glade)
+    // obtain the main window using the correct ID from glade file
     window = GTK_WIDGET(gtk_builder_get_object(builder, "IDWindow"));
     if (!GTK_IS_WINDOW(window)) {
-        g_critical("No se pudo cargar la ventana principal (IDWindow)");
+        g_critical("Could't load main window (IDWindow)");
         return 1;
     }
 
-    // Obtener los widgets con los IDs correctos del archivo Glade
+    // obtain widgets with the correct IDs from glade file
     GtkSpinButton   *IDSpin = GTK_SPIN_BUTTON(gtk_builder_get_object(builder,   "IDSpin"));
     GtkWidget       *IDSave = GTK_WIDGET(gtk_builder_get_object(builder,        "IDSave"));
     GtkWidget       *IDLoad = GTK_WIDGET(gtk_builder_get_object(builder,        "IDLoad"));
     GtkWidget       *IDLatex = GTK_WIDGET(gtk_builder_get_object(builder,       "IDLatex"));
     GtkComboBoxText *IDType = GTK_COMBO_BOX_TEXT(gtk_builder_get_object(builder, "IDType"));
-    // Poner como globales para cumplir restricciones
+    
+    // makes them global
     global_btn_save = IDSave;
     global_btn_latex = IDLatex;
 
-    // Revisa que existan y obtiene eventos
+    // checks if every widget exists and obtains events
     if (!GTK_IS_SPIN_BUTTON(    IDSpin))
         g_warning("No se encontró el widget IDSpin");
     else
@@ -1085,28 +1057,27 @@ int main(int argc, char *argv[]) {
     else
         g_signal_connect(       IDLoad, "clicked", G_CALLBACK(          on_load_button_clicked  ), builder);
 
-    if (!GTK_IS_BUTTON(IDLatex)) {
+    if (!GTK_IS_BUTTON(IDLatex))
         g_warning("No se encontró el widget IDLatex");
-    } else {
+    else
         g_signal_connect(IDLatex, "clicked", G_CALLBACK(on_latex_button_clicked), builder);
-    }
 
     if (!GTK_IS_COMBO_BOX_TEXT(IDType))
         g_warning("No se encontró el widget IDType");
     else
         g_signal_connect(IDType, "changed", G_CALLBACK(on_type_changed), builder);
 
-    // Guarda espacio para el Grafo
+    // saves space for the graph
     memset(&currentGraph, 0, sizeof(Graph));
-    // Seteamos un orden inicial    
+    // set a default size    
     currentGraph.order = 5;
     setup_grid(builder, 5);
     
-    // Metodos para cerrar.
+    // close methods
     g_signal_connect(window, "destroy", G_CALLBACK(on_window_destroy), NULL);
     gtk_builder_connect_signals(builder, NULL);
     
-    // Inicia el Loop
+    // start the main loop
     gtk_widget_show_all(window);
     gtk_main();
     return 0;
