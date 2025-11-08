@@ -17,7 +17,7 @@ gboolean *coo_row_dup = NULL;       // indicates if there are duplicated coordin
 GtkWidget *global_btn_save = NULL;
 GtkWidget *global_btn_latex = NULL;
 
-// coordinates validation
+// coordinates' validation
 static void update_coo_states_and_ui(void) {
     if (!coo_entries || current_size <= 0) return;
 
@@ -70,32 +70,30 @@ static void update_coo_states_and_ui(void) {
         if (!coo_row_valid[i]) {
             gtk_style_context_add_class(ctxx, "invalid");
             gtk_style_context_add_class(ctxy, "invalid");
-            gtk_widget_set_tooltip_text(wx, "Debe ser un entero positivo (>0)");
-            gtk_widget_set_tooltip_text(wy, "Debe ser un entero positivo (>0)");
-        } else if (coo_row_dup[i]) {
+            //gtk_widget_set_tooltip_text(wx, "Debe ser un entero positivo (>0)");
+            //gtk_widget_set_tooltip_text(wy, "Debe ser un entero positivo (>0)");
+         /*else if (coo_row_dup[i]) {
             // find first partner to mention
             int partner = -1;
             for (int j = 0; j < n; j++) {
                 if (j == i) continue;
                 if (coo_row_valid[j] && xs[i] == xs[j] && ys[i] == ys[j]) { partner = j; break; }
             }
-            gtk_style_context_add_class(ctxx, "invalid");
-            gtk_style_context_add_class(ctxy, "invalid");
             if (partner >= 0) {
                 char *msg = g_strdup_printf("Coordenada duplicada con nodo %d", partner + 1);
                 gtk_widget_set_tooltip_text(wx, msg);
                 gtk_widget_set_tooltip_text(wy, msg);
                 g_free(msg);
             } else {
-                gtk_widget_set_tooltip_text(wx, "Coordenada duplicada");
-                gtk_widget_set_tooltip_text(wy, "Coordenada duplicada");
-            }
+                gtk_widget_set_tooltip_text(wx, "Duplicated coordinate");
+                gtk_widget_set_tooltip_text(wy, "Duplicated coordinate");
+            }*/
         } else {
             // valid and not duplicate
             gtk_style_context_remove_class(ctxx, "invalid");
             gtk_style_context_remove_class(ctxy, "invalid");
-            gtk_widget_set_tooltip_text(wx, NULL);
-            gtk_widget_set_tooltip_text(wy, NULL);
+            //gtk_widget_set_tooltip_text(wx, NULL);
+            //gtk_widget_set_tooltip_text(wy, NULL);
         }
     }
 
@@ -135,11 +133,6 @@ void on_entry_insert_text(GtkEditable *editable, gchar *new_text, gint new_text_
                     gtk_entry_set_text(GTK_ENTRY(editable), buf);
                 }
             }
-            // DOESN'T SEEM TO BE NECESSARY
-
-            // stop default insertion
-            //g_signal_stop_emission_by_name(editable, "insert-text");
-            //return;
         }
         // if there is a selection, allow the insertion (it will replace selected text)
     }
@@ -267,7 +260,7 @@ void clear_grid(GtkBuilder *builder) {
         coo_row_dup = NULL;
     }
 
-    current_size = 0;
+    //current_size = 0;
 }
 
 // creates the matrix and the coordinates
@@ -352,7 +345,7 @@ void setup_grid(GtkBuilder *builder, int size) {
             // initially mark as invalid (red) and set tooltip
             GtkStyleContext *ctxx_init = gtk_widget_get_style_context(entryX);
             gtk_style_context_add_class(ctxx_init, "invalid");
-            gtk_widget_set_tooltip_text(entryX, "Coordenada no asignada");
+            //gtk_widget_set_tooltip_text(entryX, "Coordenada no asignada");
 
             // Y entry (column 1)
             GtkWidget *entryY = gtk_entry_new();
@@ -370,7 +363,7 @@ void setup_grid(GtkBuilder *builder, int size) {
             // initially mark as invalid (red) and set tooltip
             GtkStyleContext *ctxy_init = gtk_widget_get_style_context(entryY);
             gtk_style_context_add_class(ctxy_init, "invalid");
-            gtk_widget_set_tooltip_text(entryY, "Coordenada no asignada");
+            //gtk_widget_set_tooltip_text(entryY, "Coordenada no asignada");
         }
         gtk_widget_show_all(coo_grid);
         // initialize validity/duplicate UI state
@@ -416,8 +409,6 @@ void setup_grid(GtkBuilder *builder, int size) {
 
 // matrix's cleaning
 void clear_graph_matrix(int size) {
-    //GtkBuilder *builder = (GtkBuilder *)user_data;
-    
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             currentGraph.graph[i][j] = 0;
@@ -425,9 +416,6 @@ void clear_graph_matrix(int size) {
                 gtk_entry_set_text(GTK_ENTRY(entries[i][j]), "");
         }
     }
-
-    //if (entries)
-    //    clear_grid(builder);
 }
 
 // LATEX
@@ -706,12 +694,11 @@ void latex_builder(const char *filename, const Graph *g) {
 void generate_datetime_filename_prefix(char *buffer, size_t length) {
     time_t now = time(NULL);
     struct tm *t = localtime(&now);
-    if (t) {
+    if (t)
         strftime(buffer, length, "%Y%m%d_%H%M%S", t);
-    } else {
+    else
         // fallback
         snprintf(buffer, length, "output");
-    }
 }
 
 // WIDGETS
