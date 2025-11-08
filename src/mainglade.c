@@ -667,16 +667,48 @@ void latex_builder(const char *filename, const Graph *g) {
 
         fprintf(file, "\\subsection{Eulerian?}\n");
         fprintf(file, "\\begin{itemize}\n");
-        if (g->isEulerian){
-            fprintf(file, "\\item The graph has an eulerian cycle, it means the graph is in fact Eulerian.\\\\\n");
-            fprintf(file, "\\item It's connected and all nodes' out degree is the same as its in degree.\\\\\n");
-        } else if (g->isSemiEulerian){
-            fprintf(file, "\\item The graph has an eulerian path but not an eulerian cycle because it has exactly 2 vertices with odd degree, it is in fact Semi-Eulerian.\\\\\n");
-            fprintf(file, "\\item It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\\\\\n");
-        } else
-            fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
 
-        fprintf(file, "\\end{itemize}\n");
+        if (g->isDirected) {
+            if (g->isEulerian) {
+                fprintf(file, "\\item The graph has an eulerian cycle, it means the graph is in fact Eulerian.\\\\\n");
+                fprintf(file, "\\item It's connected and all nodes' out degree is the same as its in degree.\\\\\n");
+            } 
+            if (!g->isEulerian)
+                fprintf(file, "\\item The graph doesn't have an Eulerian cycle because not all nodes' out degree is the same as its in degree.\\\\\n");
+            fprintf(file, "\\end{itemize}\n");
+
+            fprintf(file, "\\subsection{Semi-Eulerian?}\n");
+            fprintf(file, "\\begin{itemize}\n");
+            if (g->isSemiEulerian) {
+                fprintf(file, "\\item The graph has an eulerian path, it is in fact Semi-Eulerian.\\\\\n");
+                fprintf(file, "\\item It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\\\\\n");
+            } 
+            if (!g->isSemiEulerian)
+                fprintf(file, "\\item The graph is not semi-Eulerian because it has more than 2 nodes with different out degree and in degree.\\\\\n");
+            if (!g->isDirected && !g->isSemiEulerian)
+                fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
+            fprintf(file, "\\end{itemize}\n");
+        } else {
+            if (g->isEulerian) {
+                fprintf(file, "\\item The graph has an eulerian cycle, it means the graph is in fact Eulerian.\\\\\n");
+                fprintf(file, "\\item It's connected and all nodes have even degree.\\\\\n");
+            } 
+            if (!g->isEulerian)
+                fprintf(file, "\\item The graph doesn't have an Eulerian cycle because not all nodes are of even degree.\\\\\n");
+            fprintf(file, "\\end{itemize}\n");
+
+            fprintf(file, "\\subsection{Semi-Eulerian?}\n");
+            fprintf(file, "\\begin{itemize}\n");
+            if (g->isSemiEulerian) {
+                fprintf(file, "\\item The graph has an eulerian path, it is in fact Semi-Eulerian.\\\\\n");
+                fprintf(file, "\\item It's semi-Eulerian because it has exactly 2 nodes of even degree.\\\\\n");
+            } 
+            if (!g->isSemiEulerian)
+                fprintf(file, "\\item The graph is not semi-Eulerian because it has more than 2 nodes of odd degree.\\\\\n");
+            if (!g->isDirected && !g->isSemiEulerian)
+                fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
+            fprintf(file, "\\end{itemize}\n");
+        }
     }
     else {
         fprintf(file, "\\subsection{Graph is not connected}\n");
