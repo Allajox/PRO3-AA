@@ -935,7 +935,7 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
             currentGraph.coords[i].y = vy;
         }
     } else
-        for (int i = 0; i < current_order; i++) { currentGraph.coords[i].x = 0; currentGraph.coords[i].y = 0;
+        for (int i = 0; i < current_order; i++) { currentGraph.coords[i].x = 0; currentGraph.coords[i].y = 0; }
     
     // PopUp to save the file
     GtkWidget *dialog = gtk_file_chooser_dialog_new("Save Graph",
