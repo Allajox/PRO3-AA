@@ -422,10 +422,14 @@ void clear_graph_matrix(int size) {
 
 // load booleans on a struct
 void load_booleans_graph(Graph *g) {
-    int path[SIZE];
-    for (int i = 0; i < SIZE; i++) path[i] = -1;
+    int path[g->order];
+    for (int i = 0; i < g->order; i++) path[i] = -1;
 
     g->isConnected = isConnected(g->graph, g->order);
+
+    // Hamiltonian cycle and path check
+    g->hasHamiltonCycle = hamiltonian(g->graph, path, g->order, 1, 0);
+    g->hasHamiltonPath = hamiltonian(g->graph, path, g->order, 0, 1);
 
     if (g->isDirected) {
         // Directed graph: use directed Eulerian functions
@@ -436,10 +440,6 @@ void load_booleans_graph(Graph *g) {
         g->isEulerian = eulerianCycle(g->graph, g->order);
         g->isSemiEulerian = eulerianPath(g->graph, g->order);
     }
-
-    // Hamiltonian cycle and path check
-    g->hasHamiltonCycle = hamiltonian(g->graph, path, g->order, 1, 0);
-    g->hasHamiltonPath = hamiltonian(g->graph, path, g->order, 0, 1);
 }
 
 // Latex Builder
@@ -644,23 +644,24 @@ void latex_builder(const char *filename, const Graph *g) {
     fprintf(file,
         "\\end{tikzpicture}\n"
         "\\end{adjustbox}\n"
-
         "\\newpage\n"
         "\\section{Graph properties}\n"
     );
 
     // ======================================================= GRAPH'S PROPERTIES =======================================================
 
-    if (g->isConnected){
+    if (g->isConnected) {
         fprintf(file, "\\subsection{Hamiltonian?}\n");
         fprintf(file, "\\begin{itemize}\n");
-        if(g->hasHamiltonCycle){
-            fprintf(file, "\\item The graph has a hamiltonian cycle.\\\\\n");
-            fprintf(file, "\\item There's a path from a starting vertex that visits all the others once and ends up in the starting one.\\\\\n");
-        } else if (g->hasHamiltonPath){
-            fprintf(file, "\\item The graph has a hamiltonian path but not a hamiltonian cycle because at least one vertex has degree less than 2.\\\\\n");
-            fprintf(file, "\\item There's a way to visit every vertex without repetition, but this way does not return to the starting vertex.\\\\\n");
-        } else
+        if (g->hasHamiltonCycle)
+            fprintf(file, "\\item The graph has a hamiltonian cycle because there's a path from a starting vertex that visits all the others once and ends up in the starting one.\\\\\n");
+        else
+            fprintf(file, "\\item The graph doesn't have a hamiltonian cycle because there's no way to visit every vertex once and end in the starting one.\\\\\n");
+        if (g->hasHamiltonPath)
+            fprintf(file, "\\item The graph has a hamiltonian path because there's a way to visit every vertex without repetition.\\\\\n");
+        else
+            fprintf(file, "\\item The graph doesn't have a hamiltonian path because there's no way to visit every vertex without repeating at least one.\\\\\n");
+        if (!g->hasHamiltonCycle && !g->hasHamiltonPath)    
             fprintf(file, "\\item The graph is connected but doesn't have a hamiltonian cycle nor a hamiltonian path.\\\\\n");
             
         fprintf(file, "\\end{itemize}\n");
@@ -683,7 +684,7 @@ void latex_builder(const char *filename, const Graph *g) {
                 fprintf(file, "\\item The graph has an eulerian path, it is in fact Semi-Eulerian.\\\\\n");
                 fprintf(file, "\\item It's semi-Eulerian because all nodes' out degree is the same as its in degree, excluding 2 nodes.\\\\\n");
             } 
-            if (!g->isSemiEulerian)
+            else
                 fprintf(file, "\\item The graph is not semi-Eulerian because it has more than 2 nodes with different out degree and in degree.\\\\\n");
             if (!g->isDirected && !g->isSemiEulerian)
                 fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
@@ -693,7 +694,7 @@ void latex_builder(const char *filename, const Graph *g) {
                 fprintf(file, "\\item The graph has an eulerian cycle, it means the graph is in fact Eulerian.\\\\\n");
                 fprintf(file, "\\item It's connected and all nodes have even degree.\\\\\n");
             } 
-            if (!g->isEulerian)
+            else
                 fprintf(file, "\\item The graph doesn't have an Eulerian cycle because not all nodes are of even degree.\\\\\n");
             fprintf(file, "\\end{itemize}\n");
 
@@ -703,7 +704,7 @@ void latex_builder(const char *filename, const Graph *g) {
                 fprintf(file, "\\item The graph has an eulerian path, it is in fact Semi-Eulerian.\\\\\n");
                 fprintf(file, "\\item It's semi-Eulerian because it has exactly 2 nodes of even degree.\\\\\n");
             } 
-            if (!g->isSemiEulerian)
+            else
                 fprintf(file, "\\item The graph is not semi-Eulerian because it has more than 2 nodes of odd degree.\\\\\n");
             if (!g->isDirected && !g->isSemiEulerian)
                 fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
@@ -713,7 +714,7 @@ void latex_builder(const char *filename, const Graph *g) {
     else {
         fprintf(file, "\\subsection{Graph is not connected}\n");
         fprintf(file, "\\begin{itemize}\n");
-        fprintf(file, "\\item The graph is not connected, therefore it can't have a hamiltonian cycle nor path, nor an eulerian cycle nor path.\\\\\n");
+        fprintf(file, "\\item The graph is not connected, therefore it can't have a hamiltonian cycle nor path, nor an Eulerian cycle nor path.\\\\\n");
         fprintf(file, "\\end{itemize}\n");
     }
 
@@ -997,7 +998,6 @@ void on_save_button_clicked(GtkButton *button, gpointer user_data) {
             gtk_dialog_run(GTK_DIALOG(error_dialog));
             gtk_widget_destroy(error_dialog);
         }
-
         // closes file
         g_free(filename);
     }
@@ -1025,19 +1025,18 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
 
 // Main
 int main(int argc, char *argv[]) {
-
     // Builder
     GtkBuilder  *builder;
     GtkWidget   *window;
     gtk_init(&argc, &argv);
 
-    // initialize builde
+    // initialize builder
     GError      *error = NULL;
     builder =   gtk_builder_new();
     
     // load glade file
     if (!gtk_builder_add_from_file(builder, "ui/Grafos.glade", &error)) {
-        g_critical("Error al cargar el archivo Glade: %s", error->message);
+        g_critical("Error loading Glade file: %s", error->message);
         g_error_free(error);
         return 1;
     }
