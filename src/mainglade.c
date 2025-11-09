@@ -428,7 +428,7 @@ void load_booleans_graph(Graph *g) {
     g->isConnected = isConnected(g->graph, g->order);
 
     // Hamiltonian cycle and path check
-    g->hasHamiltonCycle = hamiltonian(g->graph, path, g->order, 1, 0);
+    g->hasHamiltonCycle = hamiltonian(g->graph, path, g->order, 0, 0);
     g->hasHamiltonPath = hamiltonian(g->graph, path, g->order, 0, 1);
 
     if (g->isDirected) {
@@ -661,8 +661,6 @@ void latex_builder(const char *filename, const Graph *g) {
             fprintf(file, "\\item The graph has a hamiltonian path because there's a way to visit every vertex without repetition.\\\\\n");
         else
             fprintf(file, "\\item The graph doesn't have a hamiltonian path because there's no way to visit every vertex without repeating at least one.\\\\\n");
-        if (!g->hasHamiltonCycle && !g->hasHamiltonPath)    
-            fprintf(file, "\\item The graph is connected but doesn't have a hamiltonian cycle nor a hamiltonian path.\\\\\n");
             
         fprintf(file, "\\end{itemize}\n");
 
@@ -686,8 +684,6 @@ void latex_builder(const char *filename, const Graph *g) {
             } 
             else
                 fprintf(file, "\\item The graph is not semi-Eulerian because it has more than 2 nodes with different out degree and in degree.\\\\\n");
-            if (!g->isDirected && !g->isSemiEulerian)
-                fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
             fprintf(file, "\\end{itemize}\n");
         } else {
             if (g->isEulerian) {
@@ -706,8 +702,6 @@ void latex_builder(const char *filename, const Graph *g) {
             } 
             else
                 fprintf(file, "\\item The graph is not semi-Eulerian because it has more than 2 nodes of odd degree.\\\\\n");
-            if (!g->isDirected && !g->isSemiEulerian)
-                fprintf(file, "\\item The graph is connected but doesn't have an eulerian cycle nor an eulerian path.\\\\\n");
             fprintf(file, "\\end{itemize}\n");
         }
     }
@@ -747,7 +741,7 @@ void on_type_changed(GtkComboBox *combo_box, gpointer user_data) {
     }
 }
 
-// LaTeX button / Verificar Hamiltoniano
+// LaTeX button
 void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     (void)user_data;
