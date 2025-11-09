@@ -124,11 +124,11 @@ int eulerianPath(int graph[SIZE][SIZE], int size) {
             odd++;
     }
 
-    // if 
-    if (odd > 2)
-        return 0;
-    else 
+    // if there's exactly 2 nodes of odd degree, is semi-eulerian
+    if (odd == 2)
         return 1;
+    else 
+        return 0;
 }
 int eulerianCycle(int graph[SIZE][SIZE], int size) {
     int odd = 0;
