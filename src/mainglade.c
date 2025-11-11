@@ -70,9 +70,9 @@ static void update_coo_states_and_ui(void) {
         if (!coo_row_valid[i]) {
             gtk_style_context_add_class(ctxx, "invalid");
             gtk_style_context_add_class(ctxy, "invalid");
-            //gtk_widget_set_tooltip_text(wx, "Debe ser un entero positivo (>0)");
-            //gtk_widget_set_tooltip_text(wy, "Debe ser un entero positivo (>0)");
-         /*else if (coo_row_dup[i]) {
+            gtk_widget_set_tooltip_text(wx, "Must be a positive integer (>0)");
+            gtk_widget_set_tooltip_text(wy, "Must be a positive integer (>0)");
+        } else if (coo_row_dup[i]) {
             // find first partner to mention
             int partner = -1;
             for (int j = 0; j < n; j++) {
@@ -80,20 +80,20 @@ static void update_coo_states_and_ui(void) {
                 if (coo_row_valid[j] && xs[i] == xs[j] && ys[i] == ys[j]) { partner = j; break; }
             }
             if (partner >= 0) {
-                char *msg = g_strdup_printf("Coordenada duplicada con nodo %d", partner + 1);
+                char *msg = g_strdup_printf("Duplicated coordinate with node %d", partner + 1);
                 gtk_widget_set_tooltip_text(wx, msg);
                 gtk_widget_set_tooltip_text(wy, msg);
                 g_free(msg);
             } else {
                 gtk_widget_set_tooltip_text(wx, "Duplicated coordinate");
                 gtk_widget_set_tooltip_text(wy, "Duplicated coordinate");
-            }*/
+            }
         } else {
             // valid and not duplicate
             gtk_style_context_remove_class(ctxx, "invalid");
             gtk_style_context_remove_class(ctxy, "invalid");
-            //gtk_widget_set_tooltip_text(wx, NULL);
-            //gtk_widget_set_tooltip_text(wy, NULL);
+            gtk_widget_set_tooltip_text(wx, NULL);
+            gtk_widget_set_tooltip_text(wy, NULL);
         }
     }
 

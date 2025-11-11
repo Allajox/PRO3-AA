@@ -12,19 +12,19 @@ int saveGraph(const char *filename, const Graph *g) {
     FILE *file = fopen(filename, "wb");
     if (file == NULL)
         return 0;
-    size_t escritos = fwrite(g, sizeof(Graph), 1, file);
+    size_t written = fwrite(g, sizeof(Graph), 1, file);
     fclose(file);
 
-    return (escritos == 1); // 1 si se abrió el archivo, 0 si fue error
+    return (written == 1); // 1 if the file was opened, 0 if error
 }
 int loadGraph(const char *filename, Graph *g) {
     FILE *file = fopen(filename, "rb");
     if (file == NULL)
         return 0;
-    size_t leidos = fread(g, sizeof(Graph), 1, file);
+    size_t read = fread(g, sizeof(Graph), 1, file);
     fclose(file);
 
-    return (leidos == 1); // 1 si se abrió el archivo, 0 si fue error
+    return (read == 1); // 1 if the file was opened, 0 if error
 }
 
 // Just 1 "Island"
@@ -38,7 +38,7 @@ int hasIsolatedVertex(int graph[SIZE][SIZE], int size) {
             }
         }
         if (!connected)
-            return 1; // hay un vértice aislado
+            return 1; // there's an isolated vertex
     }
     return 0;
 }
@@ -108,7 +108,7 @@ int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mo
 }
 
 // Euler
-// Not Directed
+// undirected
 int eulerianPath(int graph[SIZE][SIZE], int size) {
     int odd = 0;
 
@@ -150,36 +150,36 @@ int eulerianCycle(int graph[SIZE][SIZE], int size) {
     else 
         return 1;
 }
-//Directed
-int eulerianPathDirected(int graph[SIZE][SIZE], int size) { // Costo O(n²)?
+int eulerianPathDirected(int graph[SIZE][SIZE], int size) { // O(n²) cost?
     int indegree = 0, outdegree = 0;
 
-    // Por cada nodo
+    // for each node
     for (int v = 0; v < size; v++) {
         int count_in = 0, count_out = 0;
         
-        // Cuente 1s en fila y luego columna
+        // count 1s on rows and then columns
         for (int i = 0; i < size; i++)
             if (graph[i][v] == 1) count_in++;
         for (int j = 0; j < size; j++)
             if (graph[v][j] == 1) count_out++;
 
-        // Salidas - Entradas es 1 => indegree = 1
+        // output - input is 1 => indegree = 1
         if (count_out - count_in == 1)
             indegree++;
-        // Entradas - Salidas es 1 => outdegree = 1
+        // input - output is 1 => outdegree = 1
         else if (count_in - count_out == 1)
             outdegree++;
-        // Todos los otros vértices tienen igual #entradas y #salidas 
+        // all other vertices have the same out degree and in degree
         else if (count_in != count_out)
             return 0;
 
-        // Supera diferencias en entradas y salidas entonces no SemiEuleriano
+        // if there's more than 1 node with indegree - outdegree = 1
+        // or outdegree - indegree = 1, the graph is no semi Eulerian
         if (indegree > 1 || outdegree > 1)
             return 0;
     }
 
-    // Si es ciclo o semi entonces retorna 1 
+    // if the conditions are met, return true, it's semi Eulerian
     return ( (indegree == 0 && outdegree == 0) || (indegree == 1 && outdegree == 1) );
 }
 int eulerianCycleDirected(int graph[SIZE][SIZE], int size) {
