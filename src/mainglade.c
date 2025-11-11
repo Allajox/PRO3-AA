@@ -698,7 +698,7 @@ void latex_builder(const char *filename, const Graph *g) {
             fprintf(file, "\\begin{itemize}\n");
             if (g->isSemiEulerian) {
                 fprintf(file, "\\item The graph has an eulerian path, it is in fact Semi-Eulerian.\\\\\n");
-                fprintf(file, "\\item It's semi-Eulerian because it has exactly 2 nodes of even degree.\\\\\n");
+                fprintf(file, "\\item It's semi-Eulerian because it has exactly 2 nodes of odd degree.\\\\\n");
             } 
             else
                 fprintf(file, "\\item The graph is not semi-Eulerian because it has more than 2 nodes of odd degree.\\\\\n");
@@ -746,9 +746,6 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     (void)user_data;
 
-    // loads graph's characteristics
-    load_booleans_graph(&currentGraph);
-
     // obtain matrix from the Gtk grid
     for (int row = 0; row < currentGraph.order; row++) {
         for (int col = 0; col < currentGraph.order; col++) {
@@ -781,6 +778,9 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
         }
     } else
         for (int i = 0; i < currentGraph.order; i++) { currentGraph.coords[i].x = 0; currentGraph.coords[i].y = 0; }
+
+    // loads graph's characteristics
+    load_booleans_graph(&currentGraph);
 
     // generates a different name
     char filename_prefix[32];
