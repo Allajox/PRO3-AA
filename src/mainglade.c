@@ -451,7 +451,7 @@ void latex_builder(const char *filename, const Graph *g) {
         g_warning("Failed to open LaTeX file for writing");
         return;
     }
-    
+
     fprintf(file,
         "\\documentclass[12pt]{article}\n\n"
         "%% ==== PACKAGES NECESARIOS ====\n"
@@ -584,6 +584,14 @@ void latex_builder(const char *filename, const Graph *g) {
         "For undirected graphs, every vertex needs to have an even degree for them to have an Eulerian cycle; for an Eulerian path, exactly two vertices need to have an odd degree.\n\n"
 
         "\\newpage\n"
+
+        "\\begin{figure}[h]\n"
+            "\\centering\n"
+            "\\includegraphics[width=0.8\\textwidth]{.IMG/Ciclo Euleriano.png}\n"
+            "\\caption{Eulerian cycle}"
+        "\\end{figure}\n"
+
+        "\\newpage\n"
         "\\section{Carl Hierholzer}\n"
         "\\begin{figure}[h]\n"
             "\\centering\n"
@@ -608,7 +616,7 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\end{itemize}\n"
         "\\begin{figure}[h]\n"
             "\\centering\n"
-            "\\includegraphics[width=0.3\\textwidth]{.IMG/Fleury.png}\n"
+            "\\includegraphics[width=0.6\\textwidth]{.IMG/Fleury.png}\n"
             "\\caption{Fleury's Journal}\n"
         "\\end{figure}\n"
 
@@ -918,6 +926,12 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
         "&& rm Files_PDF/*.aux Files_PDF/*.log'",
         filename_prefix);
     system(cmd2);
+
+    char cmd3[512];
+
+    // delete .aux and .log files
+    snprintf(cmd3, sizeof(cmd3), "rm Files_PDF/*.aux Files_PDF/*.log'");
+    system(cmd3);
 
     GError *gerr = NULL;
     if (!g_spawn_command_line_async(cmd, &gerr)) {
