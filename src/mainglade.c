@@ -444,6 +444,7 @@ void load_booleans_graph(Graph *g) {
 
 // Latex Builder
 void latex_builder(const char *filename, const Graph *g) {
+
     FILE *file = fopen(filename, "w");
     
     if (!file) {
@@ -456,11 +457,14 @@ void latex_builder(const char *filename, const Graph *g) {
         "%% ==== PACKAGES NECESARIOS ====\n"
         "\\usepackage{fancyhdr}\n"
         "\\usepackage{adjustbox}\n"
+
         "\\usepackage{lastpage}\n"
         "\\usepackage{setspace}\n"
         "\\usepackage[T1]{fontenc}\n"
         "\\usepackage{tikz}\n"
-        "\\usepackage[font=small, labelfont=bf]{caption}\n\n"
+        "\\usepackage[font=small, labelfont=bf]{caption}\n"
+        "\\usepackage{graphicx}\n\n"
+
 
         "%% ==== CONFIGURACIÓN ====\n"
         "\\newcommand{\\HRule}[1]{\\rule{\\linewidth}{#1}}\n"
@@ -478,7 +482,7 @@ void latex_builder(const char *filename, const Graph *g) {
 
         "\\title{\n"
         "\t\\HRule{0.5pt} \\\\\n"
-        "\t\\LARGE \\textbf{\\uppercase{ALGORITHM ANALYSIS PROGRAMMED PROJECT 03}}\\\\\n"
+        "\t\\LARGE \\textbf{\\uppercase{ALGORITHM ANALYSIS PROGRAMMED PROJECT 04}}\\\\\n"
         "\t\\HRule{2pt} \\\\ [0.5cm]\n"
         "\t\\normalsize \\vspace*{2\\baselineskip}}\n\n"
 
@@ -494,25 +498,47 @@ void latex_builder(const char *filename, const Graph *g) {
 
         "\\maketitle\n"
         "\\thispagestyle{empty}\n"
-        "\\newpage\n\n"
+        "\\clearpage\n"
+        "\\pagenumbering{arabic}\n"
+        "\\setcounter{page}{1}\n\n"
 
         "\\section{William Rowan Hamilton}\n"
+        
+        "\\begin{figure}[h]"
+        "\\centering"
+        "\\includegraphics[width=0.3\\textwidth]{.IMG/Hamilton.png}"
+        "\\end{figure}"
+
         "\\begin{itemize}\n"
-        "    \\item He was an Irish-British physicist, astronomer, and mathematician, considered the second most important mathematician in the United Kingdom after Isaac Newton. From an early age, he showed exceptional talent for mathematics and languages, being recognized as a child prodigy.\n"
-        "    \\item Hamilton is known for creating the ``Icosian Game,'' a mathematical game based on traversing the vertices of a dodecahedron without repeating any, considered a precursor to modern graph theory problems.\n"
-        "    \\item He is also famous for his discovery of quaternions, an extension of complex numbers that revolutionized the field of algebra.\n"
-        "    \\item According to legend, Hamilton was inspired to come up with this idea while walking across Brougham Bridge in Dublin, and in a moment of inspiration, he wrote the fundamental formula for quaternions on one of the bridge's stones. In honor of this event, a commemorative plaque is on the bridge that recalls this historic moment in science and mathematics.\n"
+        "\\item He was an Irish-British physicist, astronomer, and mathematician, considered the second most important mathematician in the United Kingdom after Isaac Newton. From an early age, he showed exceptional talent for mathematics and languages, being recognized as a child prodigy.\n"
+        "\\item Hamilton is known for creating the “Icosian Game,” a mathematical game based on traversing the vertices of a dodecahedron without repeating any, considered a precursor to modern graph theory problems.\n"
+        "\\item He is also famous for his discovery of quaternions, an extension of complex numbers that revolutionized the field of algebra.\n"
+        "\\item According to legend, Hamilton was inspired to come up with this idea while walking across Brougham Bridge in Dublin, and in a moment of inspiration, he wrote the fundamental formula for quaternions on one of the bridge's stones. In honor of this event, a commemorative plaque is on the bridge that recalls this historic moment in science and mathematics.\n"
         "\\end{itemize}\n\n"
 
         "\\newpage\n\n"
 
         "\\section{What are Hamiltonian paths and cycles?}\n"
+        
         "\\subsection{Hamiltonian paths}\n"
+        
+        "\\begin{figure}[h]\n"
+        "   \\centering\n"
+        "   \\includegraphics[width=0.35\\textwidth]{.IMG/Ruta Hamiltoniana.png}\n"
+        "\\end{figure}\n"
+        
         "\\begin{description}\n"
         "    \\item[Def:] A simple path that visits every vertex in the graph.\n"
         "    \\item[Def:] A path with no repeated vertices that visits all vertices of the graph.\n"
         "\\end{description}\n"
+        
         "\\subsection{Hamiltonian cycles}\n"
+        
+        "\\begin{figure}[h]\n"
+            "\\centering\n"
+            "\\includegraphics[width=0.35\\textwidth]{.IMG/Ciclo Hamiltoniano.png}\n"
+        "\\end{figure}\n"
+        
         "\\begin{description}\n"
         "    \\item[Def:] A simple cycle that visits every vertex in the graph.\n"
         "    \\item[Def:] A path with no repeated vertices in which the first and last vertices are the same, visiting all vertices of the graph.\n"
@@ -521,6 +547,12 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\newpage\n\n"
 
         "\\section{Leonhard Euler}\n"
+        
+        "\\begin{figure}[h]\n"
+            "\\centering\n"
+            "\\includegraphics[width=0.35\\textwidth]{.IMG/Euler.jpg}\n"
+        "\\end{figure}\n"
+        
         "\\begin{itemize}\n"
         "    \\item He was a Swiss mathematician, physicist, and astronomer widely recognized as one of the most prolific and brilliant scientists in history. His contributions span virtually every branch of mathematics, from calculus and number theory to geometry, mechanics, and optics.\n"
         "    \\item Euler was a disciple of Johann Bernoulli and, thanks to his genius, revolutionized mathematical notation by introducing symbols that are still used today, such as $e$ for the base of natural logarithms, $i$ for the imaginary unit, and $f(x)$ for functions.\n"
@@ -531,47 +563,122 @@ void latex_builder(const char *filename, const Graph *g) {
         "\\newpage\n\n"
 
         "\\section{What are Eulerian paths and cycles?}\n\n"
+        
         "\\subsection{Eulerian paths}\n"
+        
+        "\\begin{figure}[h]\n"
+            "\\centering\n"
+            "\\includegraphics[width=0.35\\textwidth]{.IMG/Ruta Euleriana.png}\n"
+        "\\end{figure}\n"
+
         "\\begin{description}\n"
         "    \\item[Def:] Path that visits every edge exactly once (vertices can repeat).\n"
         "\\end{description}\n\n"
+        
         "\\subsection{Eulerian cycles}\n"
+        
         "\\begin{description}\n"
         "    \\item[Def:] Cycle that visits every edge exactly once and ends in the same vertex that it started at.\n"
         "\\end{description}\n\n"
         "The way to determine an Eulerian cycle or path depends if the graph is directed or undirected. For directed graphs, every vertex needs to have an equal indegree and outdegree for it to have an Eulerian cycle; for an Eulerian path, at most one vertex has $(outdegree - indegree) = 1$ and at most one vertex has $(indegree - outdegree) = 1.$\n\n"
         "For undirected graphs, every vertex needs to have an even degree for them to have an Eulerian cycle; for an Eulerian path, exactly two vertices need to have an odd degree.\n\n"
 
+        "\\newpage\n"
+        "\\section{Carl Hierholzer}\n"
+        "\\begin{figure}[h]\n"
+            "\\centering\n"
+            "\\includegraphics[width=0.3\\textwidth]{.IMG/Hierholzer.png}\n"
+        "\\end{figure}\n"
+        "\\begin{itemize}\n"
+            "\\item He was a 19th-century German mathematician, renowned for his contributions to graph theory, especially his work on paths in Eulerian graphs. Despite not having a long career due to his early death, his work left a lasting mark on mathematics.\n"
+            "\\item Hierholzer is primarily known for formally proving that a connected graph has an Eulerian cycle if and only if all its vertices have even degree. This result, although based on earlier ideas by Euler, provided a clearer and more complete formulation within the emerging field of graph theory.\n"
+            "\\item His most celebrated contribution is Hierholzer's algorithm, an efficient method for finding Eulerian cycles in graphs. This procedure, which begins by constructing a cycle and then expands it by joining other subcycles, is widely used in computer science, combinatorics, and optimization.\n"
+        "\\end{itemize}\n"
+
+
+        "\\newpage\n\n"
+
+        "\\section{Théodore Fleury}\n"
+
+        "\\begin{itemize}\n"
+            "\\item He was a 19th-century French mathematician, known for his contributions to graph theory at a time when this discipline was just beginning to be formalized. Although not as widely mentioned as other mathematicians of his time, his work is fundamental to the study of Eulerian paths.\n"
+            "\\item Fleury is especially remembered for developing a practical method for constructing Eulerian cycles and paths in graphs. His algorithm, known as Fleury's algorithm, offers an intuitive way to traverse a graph by visiting each edge exactly once without getting stuck, avoiding the removal of edges that break the graph's connectivity.\n"
+            "\\item This algorithm is based on a simple but powerful idea: always select an edge that is not a \\\"bridge\\\"—unless there is no other option—thus guaranteeing the continuity of the path. His approach helped establish basic principles for the systematic solution of Eulerian problems.\n"
+            "\\item Although his historical figure is not as well documented as that of other mathematicians, Fleury's method continues to be taught in courses on algorithms, data structures, and graph theory. His contribution is considered a key piece in the evolution of techniques for finding Eulerian paths and cycles in graphs.\n"
+        "\\end{itemize}\n"
+        "\\begin{figure}[h]\n"
+            "\\centering\n"
+            "\\includegraphics[width=0.3\\textwidth]{.IMG/Fleury.png}\n"
+            "\\caption{Fleury's Journal}\n"
+        "\\end{figure}\n"
+
         "\\newpage\n\n"
 
         "\\section{Explanation of Colors}\n"
-        "\\begin{center}\n"
-        "\\begin{tikzpicture}[\n"
-        "    %% ==== Definici\\'on de estilos ====\n"
-        "    NotDirectedEven/.style={circle, draw=black, fill=white, very thick, minimum size=8mm},\n"
-        "    NotDirectedOdd/.style={circle, draw=black, fill=black, very thick, minimum size=8mm, text=white},\n"
-        "    DirectedEvenInEvenOut/.style={circle, draw=red!80!black, fill=red!30, very thick, minimum size=8mm},\n"
-        "    DirectedEvenInOddOut/.style={circle, draw=violet!80!black, fill=violet!40, very thick, minimum size=8mm},\n"
-        "    DirectedOddInEvenOut/.style={circle, draw=purple!80!black, fill=purple!40, very thick, minimum size=8mm, text=white},\n"
-        "    DirectedOddInOddOut/.style={circle, draw=blue!80!black, fill=blue!40, very thick, minimum size=8mm, text=white}\n"
-        "]\n"
-        "\\node[NotDirectedEven] (A) at (0,0) {A};\n"
-        "\\node[NotDirectedOdd] (B) at (2,0) {B};\n"
-        "\\node[DirectedEvenInEvenOut] (C) at (4,0) {C};\n"
-        "\\node[DirectedEvenInOddOut] (D) at (6,0) {D};\n"
-        "\\node[DirectedOddInEvenOut] (E) at (8,0) {E};\n"
-        "\\node[DirectedOddInOddOut] (F) at (10,0) {F};\n"
-        "\\end{tikzpicture}\\n"
-        "\\end{center}\\n\\n"
-        "\\vspace{0.5cm}\\n"
-        "\\begin{description}\\n"
-        "    \\item[A:] It is a Undirected Node with Even Degree.\\n"
-        "    \\item[B:] It is a Undirected Node with Odd Degree.\\n"
-        "    \\item[C:] It is a Directed Node with Even Degree Input and Even Degree Output.\\n"
-        "    \\item[D:] It is a Directed Node with Even Degree Input and Odd Degree Output.\\n"
-        "    \\item[E:] It is a Directed Node with Odd Degree Input and Even Degree Output.\\n"
-        "    \\item[F:] It is a Directed Node with Odd Degree Input and Odd Degree Output.\\n"
-        "\\end{description}\\n"
+    
+        "\\subsection{Undirected Nodes}\n"
+
+        "\\begin{table}[h!]\n"
+        "\\centering\n"
+        "\\begin{tabular}{|c|c|c|}\n"
+        "\\hline\n"
+        "\\textbf{Degree Parity} & \\textbf{Color/Style} & \\textbf{Representation} \\\\ \\hline\n"
+
+        "Even &\n"
+        "\\texttt{NotDirectedEven} &\n"
+        "\\begin{tikzpicture}\n"
+        "\\node[circle, draw=black, fill=white, minimum size=8mm]{};\n"
+        "\\end{tikzpicture}\n"
+        "\\\\ \\hline\n"
+
+        "Odd &\n"
+        "\\texttt{NotDirectedOdd} &\n"
+        "\\begin{tikzpicture}\n"
+        "\\node[circle, draw=black, fill=black, text=white, minimum size=8mm]{};\n"
+        "\\end{tikzpicture}\n"
+        "\\\\ \\hline\n"
+
+        "\\end{tabular}\n"
+        "\\caption{Truth Table for Undirected Nodes}\n"
+        "\\end{table}\n"
+
+        "\\subsection{Directed Nodes}\n"
+
+        "\\begin{table}[h!]\n"
+        "\\centering\n"
+        "\\begin{tabular}{|c|c|c|c|}\n"
+        "\\hline\n"
+        "\\textbf{InDegree} & \\textbf{OutDegree} & \\textbf{Color/Style} & \\textbf{Representation} \\\\ \\hline\n"
+
+        "Even & Even & \\texttt{DirectedEvenInEvenOut} &\n"
+        "\\begin{tikzpicture}\n"
+        "\\node[circle, draw=red!80!black, fill=red!30, minimum size=8mm]{};\n"
+        "\\end{tikzpicture}\n"
+        "\\\\ \\hline\n"
+
+        "Even & Odd & \\texttt{DirectedEvenInOddOut} &\n"
+        "\\begin{tikzpicture}\n"
+        "\\node[circle, draw=violet!80!black, fill=violet!40, minimum size=8mm]{};\n"
+        "\\end{tikzpicture}\n"
+        "\\\\ \\hline\n"
+
+        "Odd & Even & \\texttt{DirectedOddInEvenOut} &\n"
+        "\\begin{tikzpicture}\n"
+        "\\node[circle, draw=purple!80!black, fill=purple!40, text=white, minimum size=8mm]{};\n"
+        "\\end{tikzpicture}\n"
+        "\\\\ \\hline\n"
+
+        "Odd & Odd & \\texttt{DirectedOddInOddOut} &\n"
+        "\\begin{tikzpicture}\n"
+        "\\node[circle, draw=blue!80!black, fill=blue!40, text=white, minimum size=8mm]{};\n"
+        "\\end{tikzpicture}\n"
+        "\\\\ \\hline\n"
+
+        "\\end{tabular}\n"
+        "\\caption{Truth Table for Directed Nodes}\n"
+        "\\end{table}\n"
+
+        "\\newpage\n"
         
     );
 
