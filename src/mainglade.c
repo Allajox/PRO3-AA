@@ -1139,7 +1139,7 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
 }
 
 // Main
-int main(int argc, char *argv[]) {
+/*int main(int argc, char *argv[]) {
     // Builder
     GtkBuilder  *builder;
     GtkWidget   *window;
@@ -1215,3 +1215,4 @@ int main(int argc, char *argv[]) {
     gtk_main();
     return 0;
 }
+*/
