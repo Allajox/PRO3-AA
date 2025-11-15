@@ -1,11 +1,14 @@
-#include<stdio.h>
-#include"logic.h"
+#include <stdio.h>
+#include "logic.h"
+#include <time.h>
+#include <stdlib.h>
 
-int fp = 0, count = 0;
-
-void displayPath(int finalPath[SIZE]) {
-    for(int i = 0; i < fp; i++)
-        printf("%d -> ", finalPath[i]);
+void displayPath(int path[], int pathSize) {
+    for (int i = 0; i < pathSize; i++)
+        if (i == pathSize - 1) // if the end was reached, don't print the arrow
+            printf("%d", path[i] + 1);
+        else
+            printf("%d -> ", path[i] + 1); // +1 to show the correct node label
     printf("\n");
 }
 
@@ -18,37 +21,44 @@ int getDegree(int graph[SIZE][SIZE], int size, int node) {
 }
 
 int findRoot(int graph[SIZE][SIZE], int size) {
-    int current = 0; // Empezar desde el primer nodo
-    count = 0; // Reiniciar count
+    int current = 0; // start from the first node
+    int oddCount = 0;
     
     for (int i = 0; i < size; i++) {
-        if(getDegree(graph, size, i) % 2 != 0) {
-            count++;
+        if (getDegree(graph, size, i) % 2 != 0) {
+            oddCount++;
             current = i;
         }
     }
-    
-    if (count != 0 && count != 2)
-        return 0;
-    else 
+    // if the conditions are not met, stop
+    if (oddCount != 0 && oddCount != 2)
+        return -1;
+        
+    else if (oddCount == 2)
         return current;
-}
 
-int isHasOneEdge(int graph[SIZE][SIZE], int size, int node) {  
-    return (getDegree(graph, size, node) == 1);
+    // if there are no odd nodes, choose one at random
+    else {
+        srand(time(NULL));
+        return rand() % size;
+    } 
 }
 
 int isLastNode(int graph[SIZE][SIZE], int size) {
     int degSum = 0;
-    for(int i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
         degSum += getDegree(graph, size, i);
     return (degSum == 2);
+}
+
+int hasOneEdge(int graph[SIZE][SIZE], int size, int node) {  
+    return (getDegree(graph, size, node) == 1);
 }
 
 int getNextNode(int graph[SIZE][SIZE], int size, int node) {
     for (int i = 0; i < size; i++) {   
         if (graph[node][i] == 1) {
-            if (!isHasOneEdge(graph, size, i))
+            if (!hasOneEdge(graph, size, i))
                 return i;
             else {
                 if (isLastNode(graph, size))
@@ -59,59 +69,99 @@ int getNextNode(int graph[SIZE][SIZE], int size, int node) {
     return -1;
 }
 
+// determines if the graph has no more edges
 int isCompleted(int graph[SIZE][SIZE], int size) {
-    for(int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++) {
         if (getDegree(graph, size, i) > 0)
             return 0;
     }
     return 1;
 }
 
-void removeEdge(int graph[SIZE][SIZE], int root, int eNode) {
-    graph[root][eNode] = 0;
-    graph[eNode][root] = 0;
+// main algorithm
+int fleury(int graph[SIZE][SIZE], int path[], int size, int root) {   
+    path[0] = root;
+    int current = root;
+    int next;
+    int pathSize = 1;
+
+    // formula for the maximum amount of edges
+    int maxEdges = (size * (size - 1)) / 2;
+
+    // loop that inserts the nodes into the path
+    for (int i = 0; i < maxEdges; i++) {
+        next = getNextNode(graph, size, current);
+        if (next == -1 || isCompleted(graph, size)) 
+            break; 
+
+        path[i] = next;
+        pathSize++;
+        // removes the edges from the graph
+        graph[current][next] = 0;
+        graph[next][current] = 0;
+
+        // updates current
+        current = next;
+    }
+    return pathSize;
 }
 
-void eulerFind(int graph[SIZE][SIZE], int finalPath[SIZE], int size, int root) {   
-    int eNode;
-    while (!isCompleted(graph, size)) {
-        eNode = getNextNode(graph, size, root);
-        if (eNode == -1) 
-            break; // Protección contra nodo no encontrado
-
-        finalPath[fp++] = eNode;
-        removeEdge(graph, root, eNode);
-        root = eNode;
+int countOddDegreeNodes(int graph[SIZE][SIZE], int size) {
+    int oddCount = 0;
+    for (int i = 0; i < size; i++) {
+        if (getDegree(graph, size, i) % 2 != 0)
+            oddCount++;
     }
+    return oddCount;
 }
 
 int main() {
-
     int graph[SIZE][SIZE] = {
-        {0, 1, 0, 0, 0},
+        {0, 1, 0, 0, 1},
         {1, 0, 1, 0, 0},
         {0, 1, 0, 1, 0},
         {0, 0, 1, 0, 1},
-        {0, 0, 0, 1, 0}
+        {1, 0, 0, 1, 0}
     };
 
-    int finalPath[SIZE];
+    /*int graph[SIZE][SIZE] = {
+        {0, 1, 1, 1, 1},
+        {1, 0, 1, 1, 1},
+        {1, 1, 0, 1, 1},
+        {1, 1, 1, 0, 1},
+        {1, 1, 1, 1, 0}
+    };*/
+
+    /*int graph[SIZE][SIZE] = {
+        {0, 1, 1, 0, 1, 1},
+        {1, 0, 1, 1, 0, 1},
+        {1, 1, 0, 1, 1, 0},
+        {0, 1, 1, 0, 1, 1},
+        {1, 0, 1, 1, 0, 1},
+        {1, 1, 0, 1, 1, 0}
+    };*/
 
     int size = 5;
+    
+    // the path can have maximum (size * (size - 1)) / 2 nodes, so for this project,
+    // the maximum is 66 (gotten with 12 nodes)
+    int path[66];
 
     int root = findRoot(graph, size);
+    int oddCount = countOddDegreeNodes(graph, size);
     
-    if (root) {
-        if (count) 
-            printf("Available Euler Path is\n");
-        else 
-            printf("Available Euler Circuit is\n");
+    if (root != -1) {
+        if (oddCount == 2)  // semi eulerian (path)
+            printf("Available Eulerian Path is\n");
+        else                // eulerian (cycle)
+            printf("Available Eulerian Circuit is\n");
 
-        finalPath[fp++] = root;
-        eulerFind(graph, finalPath, size, root);
-        displayPath(finalPath);
+        path[0] = root;
+        int pathSize = fleury(graph, path, size, root);
+
+        displayPath(path, pathSize);
     } else
-        printf("Euler path or circuit not available\n");
+        printf("Eulerian path or circuit not available\n");
     
     return 0;
 }
