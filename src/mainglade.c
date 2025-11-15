@@ -16,7 +16,6 @@ gboolean *coo_row_valid = NULL;     // indicates if a row of coordinates is vali
 gboolean *coo_row_dup = NULL;       // indicates if there are duplicated coordinates
 GtkWidget *global_btn_save = NULL;
 GtkWidget *global_btn_latex = NULL;
-
 // coordinates' validation
 static void update_coo_states_and_ui(void) {
     if (!coo_entries || current_size <= 0) return;
@@ -265,6 +264,10 @@ void clear_grid(GtkBuilder *builder) {
 
 // creates the matrix and the coordinates
 void setup_grid(GtkBuilder *builder, int size) {
+    // sanitize requested size to safe bounds
+    if (size < 1) size = 1;
+    if (size > SIZE) size = SIZE;
+
     // clear the existing grid if one already exists
     if (entries)
         clear_grid(builder);
@@ -433,12 +436,22 @@ void load_booleans_graph(Graph *g) {
 
     if (g->isDirected) {
         // Directed graph: use directed Eulerian functions
-        g->isEulerian = eulerianCycleDirected(g->graph, g->order);
-        g->isSemiEulerian = eulerianPathDirected(g->graph, g->order);
+        g->isSemiEulerian = hasEulerianPathDirected(g->graph, g->order, &g->startNode);
+        g->isEulerian = hasEulerianCycleDirected(g->graph, g->order);
     } else {
         // Undirected graph
-        g->isEulerian = eulerianCycle(g->graph, g->order);
-        g->isSemiEulerian = eulerianPath(g->graph, g->order);
+        g->isSemiEulerian = hasEulerianPathUndirected(g->graph, g->order, &g->startNode);
+        g->isEulerian = hasEulerianCycleUndirected(g->graph, g->order);
+    }
+
+    if (g->isEulerian || g->isSemiEulerian) {
+        int circuit[SIZE * SIZE];
+        int len = hierholzer(g->graph, g->order, g->startNode, circuit, g->isDirected);
+        // copy up to SIZE elements into g->circuit (avoid overflow)
+        for (int i = 0; i < SIZE; i++) {
+            if (i < len && i < g->order) g->circuit[i] = circuit[i];
+            else g->circuit[i] = -1;
+        }
     }
 }
 
@@ -759,11 +772,127 @@ void latex_builder(const char *filename, const Graph *g) {
     fprintf(file,
         "\\end{tikzpicture}\n"
         "\\end{adjustbox}\n"
-        "\\newpage\n"
-        "\\section{Graph properties}\n"
     );
 
+    // ======================================================= HIERHOLZER'S PATH / CYCLE =======================================================
+
+    // compute circuit with Hierholzer
+    int circuit[SIZE * SIZE];
+    int circuit_len = hierholzer((int (*)[SIZE])g->graph, g->order, g->startNode, circuit, g->isDirected);
+
+    // only print a dedicated section if the graph is Eulerian (cycle) or Semi-Eulerian (path)
+    if ((g->isEulerian || g->isSemiEulerian) && g->isConnected) {
+        if (g->isEulerian)
+            fprintf(file, "\\section{Eulerian cycle (Eulerian)}\n");
+        else
+            fprintf(file, "\\section{Hierholzer path (Semi-Eulerian)}\n");
+
+        fprintf(file,
+            "\\begin{adjustbox}{max width = \\textwidth, max height = \\textheight}\n"
+            "\\begin{tikzpicture}[\n"
+            "NotDirectedEven/.style={circle, draw=black, fill=white, very thick, minimum size=8mm},\n"
+            "NotDirectedOdd/.style={circle, draw=black, fill=black, very thick, minimum size=8mm, text=white},\n"
+            "DirectedEvenInEvenOut/.style={circle, draw=red!80!black, fill=red!30, very thick, minimum size=8mm},\n"
+            "DirectedEvenInOddOut/.style={circle, draw=violet!80!black, fill=violet!40, very thick, minimum size=8mm},\n"
+            "DirectedOddInEvenOut/.style={circle, draw=purple!80!black, fill=purple!40, very thick, minimum size=8mm, text=white},\n"
+            "DirectedOddInOddOut/.style={circle, draw=blue!80!black, fill=blue!40, very thick, minimum size=8mm, text=white}\n"
+            "]\n"
+        );
+
+        // compute degrees based only on circuit edges
+        int indeg[SIZE] = {0}, outdeg[SIZE] = {0}, deg[SIZE] = {0};
+        if (circuit_len > 1) {
+            for (int i = 0; i < circuit_len - 1; i++) {
+                int a = circuit[i];
+                int b = circuit[i+1];
+                if (a < 0 || a >= g->order || b < 0 || b >= g->order) continue;
+                if (g->isDirected) {
+                    outdeg[a]++;
+                    indeg[b]++;
+                } else {
+                    deg[a]++;
+                    deg[b]++;
+                }
+            }
+            // if it's an Eulerian cycle and the circuit does not explicitly close, close it
+            if (g->isEulerian && circuit_len > 0) {
+                int first = circuit[0];
+                int last = circuit[circuit_len - 1];
+                if (first != last) {
+                    if (g->isDirected) { outdeg[last]++; indeg[first]++; }
+                    else { deg[first]++; deg[last]++; }
+                }
+            }
+        }
+
+        // draw nodes using degrees from the circuit
+        fprintf(file, "%% === NODOS (hierholzer) === \n");
+        for (int i = 0; i < g->order; i++) {
+            int x = g->coords[i].x;
+            int y = g->coords[i].y;
+            if (g->isDirected) {
+                int id = indeg[i];
+                int od = outdeg[i];
+                if (id % 2 == 0 && od % 2 == 0)
+                    fprintf(file, "\\node[DirectedEvenInEvenOut] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
+                else if (id % 2 == 0 && od % 2 != 0)
+                    fprintf(file, "\\node[DirectedEvenInOddOut] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
+                else if (id % 2 != 0 && od % 2 == 0)
+                    fprintf(file, "\\node[DirectedOddInEvenOut] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
+                else
+                    fprintf(file, "\\node[DirectedOddInOddOut] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
+            } else {
+                int d = deg[i];
+                if (d % 2 == 0)
+                    fprintf(file, "\\node[NotDirectedEven] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
+                else
+                    fprintf(file, "\\node[NotDirectedOdd] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
+            }
+        }
+
+        // draw only edges present in the circuit
+        fprintf(file, "%% === ARISTAS (hierholzer) === \n");
+        if (circuit_len > 1) {
+            for (int i = 0; i < circuit_len - 1; i++) {
+                int a = circuit[i];
+                int b = circuit[i+1];
+                if (a < 0 || a >= g->order || b < 0 || b >= g->order) continue;
+                if (g->isDirected)
+                    fprintf(file, "\\draw[->, very thick, red] (N%d) -- (N%d);\\n", a+1, b+1);
+                else
+                    fprintf(file, "\\draw[--, very thick, red] (N%d) -- (N%d);\\n", a+1, b+1);
+            }
+            if (g->isEulerian) {
+                int first = circuit[0];
+                int last = circuit[circuit_len - 1];
+                if (first != last && first >=0 && first < g->order && last >=0 && last < g->order) {
+                    if (g->isDirected)
+                        fprintf(file, "\\draw[->, very thick, red] (N%d) -- (N%d);\\n", last+1, first+1);
+                    else
+                        fprintf(file, "\\draw[--, very thick, red] (N%d) -- (N%d);\\n", last+1, first+1);
+                }
+            }
+        }
+
+        // show degrees derived from the circuit
+        fprintf(file, "\\end{tikzpicture}\\end{adjustbox}\\n");
+
+        fprintf(file, "\\subsection{Degrees in the circuit}\\n\\begin{itemize}\\n");
+        for (int i = 0; i < g->order; i++) {
+            if (g->isDirected)
+                fprintf(file, "\\item Node %d: indeg=%d, outdeg=%d.\\\\\n", i+1, indeg[i], outdeg[i]);
+            else
+                fprintf(file, "\\item Node %d: degree=%d.\\\\\n", i+1, deg[i]);
+        }
+        fprintf(file, "\\end{itemize}\\n");
+    }
+
     // ======================================================= GRAPH'S PROPERTIES =======================================================
+    
+    // Properties
+    fprintf(file,"\\newpage\n"
+        "\\section{Graph properties}\n"
+    );
 
     if (g->isConnected) {
         fprintf(file, "\\subsection{Hamiltonian?}\n");
@@ -929,8 +1058,8 @@ void on_latex_button_clicked(GtkButton *button, gpointer user_data) {
 
     char cmd3[512];
 
-    // delete .aux and .log files
-    snprintf(cmd3, sizeof(cmd3), "rm Files_PDF/*.aux Files_PDF/*.log'");
+    // delete .aux and .log files (force, ignore missing)
+    snprintf(cmd3, sizeof(cmd3), "rm -f Files_PDF/*.aux Files_PDF/*.log");
     system(cmd3);
 
     GError *gerr = NULL;
@@ -1137,6 +1266,7 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
     }
     gtk_main_quit();
 }
+
 
 // Main
 /*int main(int argc, char *argv[]) {
