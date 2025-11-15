@@ -779,7 +779,7 @@ void latex_builder(const char *filename, const Graph *g) {
     // only print a dedicated section if the graph is Eulerian (cycle) or Semi-Eulerian (path)
     if (g->isEulerian || g->isSemiEulerian) {
         if (g->isEulerian)
-            fprintf(file, "\\section{Eulerian cycle (Hierholzer)}\n");
+            fprintf(file, "\\section{Eulerian cycle (Eulerian)}\n");
         else
             fprintf(file, "\\section{Hierholzer path (Semi-Eulerian)}\n");
 
