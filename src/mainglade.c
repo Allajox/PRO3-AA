@@ -816,7 +816,7 @@ void latex_builder(const char *filename, const Graph *g) {
                 fprintf(file, "\\item It's semi-Eulerian because it has exactly 2 nodes of odd degree.\\\\\n");
             } 
             else
-                fprintf(file, "\\item The graph is not semi-Eulerian because it has more than 2 nodes of odd degree.\\\\\n");
+                fprintf(file, "\\item The graph is not semi-Eulerian because it doesn't have exactly 2 nodes of odd degree.\\\\\n");
             fprintf(file, "\\end{itemize}\n");
         }
     }

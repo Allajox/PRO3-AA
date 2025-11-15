@@ -3,6 +3,7 @@
         "string.h": "c",
         "type_traits": "c",
         "time.h": "c",
-        "logic.h": "c"
+        "logic.h": "c",
+        "stdlib.h": "c"
     }
 }
