@@ -264,6 +264,10 @@ void clear_grid(GtkBuilder *builder) {
 
 // creates the matrix and the coordinates
 void setup_grid(GtkBuilder *builder, int size) {
+    // sanitize requested size to safe bounds
+    if (size < 1) size = 1;
+    if (size > SIZE) size = SIZE;
+
     // clear the existing grid if one already exists
     if (entries)
         clear_grid(builder);
@@ -440,12 +444,12 @@ void load_booleans_graph(Graph *g) {
         g->isEulerian = hasEulerianCycleUndirected(g->graph, g->order);
     }
 
-    if (g->isEulerian || g->isSemiEulerian){
+    if (g->isEulerian || g->isSemiEulerian) {
         int circuit[SIZE * SIZE];
-        int len = hierholzer(currentGraph.graph, currentGraph.order, currentGraph.startNode, circuit, currentGraph.isDirected);
-        // copy up to SIZE elements into g->circuit (avoid overflow and invalid assignment)
+        int len = hierholzer(g->graph, g->order, g->startNode, circuit, g->isDirected);
+        // copy up to SIZE elements into g->circuit (avoid overflow)
         for (int i = 0; i < SIZE; i++) {
-            if (i < len && i < currentGraph.order) g->circuit[i] = circuit[i];
+            if (i < len && i < g->order) g->circuit[i] = circuit[i];
             else g->circuit[i] = -1;
         }
     }
@@ -777,7 +781,7 @@ void latex_builder(const char *filename, const Graph *g) {
     int circuit_len = hierholzer((int (*)[SIZE])g->graph, g->order, g->startNode, circuit, g->isDirected);
 
     // only print a dedicated section if the graph is Eulerian (cycle) or Semi-Eulerian (path)
-    if (g->isEulerian || g->isSemiEulerian) {
+    if ((g->isEulerian || g->isSemiEulerian) && g->isConnected) {
         if (g->isEulerian)
             fprintf(file, "\\section{Eulerian cycle (Eulerian)}\n");
         else

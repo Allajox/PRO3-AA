@@ -43,6 +43,10 @@ int loadGraph(const char *filename, Graph *g) {
     size_t read_bytes = fread((void*)g, 1, to_read, file);
     fclose(file);
 
+    // clamp order to valid range to avoid out-of-bounds usage elsewhere
+    if (g->order < 1) g->order = 1;
+    if (g->order > SIZE) g->order = SIZE;
+
     return (read_bytes == to_read) && (to_read > 0);
 }
 
@@ -138,8 +142,13 @@ int hasEulerianPathUndirected(int graph[SIZE][SIZE], int size, int *startVertex)
             if (graph[i][j] == 1)
                 degree++;
 
-        if (degree % 2 == 1)
-            oddVerts[oddCount++] = i;
+        if (degree % 2 == 1) {
+            if (oddCount < 2)
+                oddVerts[oddCount] = i;
+            oddCount++;
+            if (oddCount > 2)
+                return 0; // more than 2 odd-degree vertices -> not semi-eulerian
+        }
     }
 
     if (oddCount == 2) {
