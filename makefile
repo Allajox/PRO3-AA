@@ -14,7 +14,7 @@ TARGET = Graphs
 SRC_DIR = src
 
 # Archivos fuente
-SRC = $(SRC_DIR)/logic.c $(SRC_DIR)/mainglade.c $(SRC_DIR)/test.c
+SRC = $(SRC_DIR)/logic.c $(SRC_DIR)/mainglade.c
 
 # Regla por defecto
 all: $(TARGET)

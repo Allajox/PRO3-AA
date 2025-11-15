@@ -456,7 +456,7 @@ void load_booleans_graph(Graph *g) {
 }
 
 // Latex Builder
-void latex_builder(const char *filename, const Graph *g) {
+void latex_builder(const char *filename, Graph *g) {
 
     FILE *file = fopen(filename, "w");
     
@@ -956,6 +956,22 @@ void latex_builder(const char *filename, const Graph *g) {
         fprintf(file, "\\end{itemize}\n");
     }
 
+    fprintf(file, "\\section{Fleury}\n");
+    int pathSize;
+    int path[66];
+    int root = findRoot(g->graph, g->order);
+
+    if (hasEulerianCycleUndirected(g->graph, g->order))
+        printf("Available Eulerian Circuit is\n");
+
+    else if (hasEulerianPathUndirected(g->graph, g->order, &root))
+        printf("Available Eulerian Path is\n");
+
+    if (fleury(g->graph, path, g->order, &pathSize, root))
+        printPath(path, pathSize);
+    else
+        printf("Couldn't complete the eulerian path or circuit.\n");
+
     fprintf(file, "\\end{document}\n");
 
     fclose(file);
@@ -1269,7 +1285,7 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
 
 
 // Main
-/*int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     // Builder
     GtkBuilder  *builder;
     GtkWidget   *window;
@@ -1345,4 +1361,3 @@ void on_window_destroy(GtkWidget *widget, GtkBuilder *builder, gpointer data) {
     gtk_main();
     return 0;
 }
-*/

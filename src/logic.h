@@ -56,4 +56,11 @@ int hasEulerianCycleDirected(int graph[SIZE][SIZE], int size);
 
 int hierholzer(int graph[SIZE][SIZE], int size, int start, int circuit[], int isDirected);
 
+void printPath(int path[], int pathSize);
+int getDegree(int graph[SIZE][SIZE], int size, int node);
+int findRoot(int graph[SIZE][SIZE], int size);
+int getNextNode(int graph[SIZE][SIZE], int size, int node);
+int isCompleted(int graph[SIZE][SIZE], int size);
+int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root);
+
 #endif

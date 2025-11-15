@@ -106,7 +106,7 @@ int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root)
     return (isCompleted(graph, size));
 }
 
-int main() {
+/*int main() {
     int graph[SIZE][SIZE] = {
         {0, 1, 0, 0, 1},
         {1, 0, 1, 0, 0},
@@ -115,7 +115,7 @@ int main() {
         {1, 0, 0, 1, 0}
     };
 
-    /*int graph2[SIZE][SIZE] = {
+    int graph2[SIZE][SIZE] = {
         {0, 1, 1, 1, 1},
         {1, 0, 1, 1, 1},
         {1, 1, 0, 1, 1},
@@ -130,7 +130,7 @@ int main() {
         {0, 1, 1, 0, 1, 1},
         {1, 0, 1, 1, 0, 1},
         {1, 1, 0, 1, 1, 0}
-    };*/
+    };
 
     int size = 5;
     int pathSize;
@@ -142,11 +142,11 @@ int main() {
     int root = findRoot(graph, size);
     
     if (root != -1) {
-        if (eulerianPath(graph, size))
-            printf("Available Eulerian Path is\n");
-
-        else if (eulerianCycle(graph, size))
+        if (hasEulerianCycleUndirected(graph, size))
             printf("Available Eulerian Circuit is\n");
+
+        else if (hasEulerianPathUndirected(graph, size, &root))
+            printf("Available Eulerian Path is\n");
 
         if (fleury(graph, path, size, &pathSize, root))
             printPath(path, pathSize);
@@ -156,4 +156,4 @@ int main() {
         printf("Eulerian path or circuit not available\n");
     
     return 0;
-}
+}*/
