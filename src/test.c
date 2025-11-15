@@ -3,12 +3,21 @@
 #include <time.h>
 #include <stdlib.h>
 
-void displayPath(int path[], int pathSize) {
-    for (int i = 0; i < pathSize; i++)
-        if (i == pathSize - 1) // if the end was reached, don't print the arrow
-            printf("%d", path[i] + 1);
-        else
-            printf("%d -> ", path[i] + 1); // +1 to show the correct node label
+void printPath(int path[], int pathSize, int mode) {
+    if (mode == 1) { // path mode
+        for (int i = 0; i < pathSize; i++)
+            if (i == pathSize - 1)              // if the end was reached, print only the label
+                printf("%d", path[i] + 1);
+            else
+                printf("%d -> ", path[i] + 1);  // +1 to show the correct node label
+    }
+    else { // cycle mode
+        for (int i = 0; i < pathSize; i++)
+            if (i == pathSize - 1)              // if the end was reached, print only the first node's label
+                printf("%d", path[0] + 1);
+            else
+                printf("%d -> ", path[i] + 1);
+    }
     printf("\n");
 }
 
@@ -79,11 +88,11 @@ int isCompleted(int graph[SIZE][SIZE], int size) {
 }
 
 // main algorithm
-int fleury(int graph[SIZE][SIZE], int path[], int size, int root) {   
+int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root) {   
     path[0] = root;
     int current = root;
     int next;
-    int pathSize = 1;
+    *pathSize = 1;
 
     // formula for the maximum amount of edges
     int maxEdges = (size * (size - 1)) / 2;
@@ -91,19 +100,26 @@ int fleury(int graph[SIZE][SIZE], int path[], int size, int root) {
     // loop that inserts the nodes into the path
     for (int i = 0; i < maxEdges; i++) {
         next = getNextNode(graph, size, current);
-        if (next == -1 || isCompleted(graph, size)) 
-            break; 
+        if (next == -1) {
+            if (!isCompleted(graph, size)) 
+                return 0;
+            else
+                break;
+        }
 
-        path[i] = next;
-        pathSize++;
+        path[i + 1] = next;
+        (*pathSize)++;
         // removes the edges from the graph
         graph[current][next] = 0;
         graph[next][current] = 0;
 
         // updates current
         current = next;
+        
+        if (isCompleted(graph, size))
+            return 1;
     }
-    return pathSize;
+    return (isCompleted(graph, size));
 }
 
 int countOddDegreeNodes(int graph[SIZE][SIZE], int size) {
@@ -142,24 +158,30 @@ int main() {
     };*/
 
     int size = 5;
+    int pathSize;
     
-    // the path can have maximum (size * (size - 1)) / 2 nodes, so for this project,
+    // the path can have maximum (size * (size - 1)) / 2 edges, so for this project,
     // the maximum is 66 (gotten with 12 nodes)
     int path[66];
 
     int root = findRoot(graph, size);
     int oddCount = countOddDegreeNodes(graph, size);
+    int mode = 0;
     
     if (root != -1) {
-        if (oddCount == 2)  // semi eulerian (path)
+        if (oddCount == 2) { // semi eulerian (path)
             printf("Available Eulerian Path is\n");
+            mode = 1;
+        }
         else                // eulerian (cycle)
             printf("Available Eulerian Circuit is\n");
 
         path[0] = root;
-        int pathSize = fleury(graph, path, size, root);
 
-        displayPath(path, pathSize);
+        if (fleury(graph, path, size, &pathSize, root))
+            printPath(path, pathSize, mode);
+        else
+            printf("Couldn't complete the eulerian path.\n");
     } else
         printf("Eulerian path or circuit not available\n");
     
