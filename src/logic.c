@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "logic.h"
 
 void printGraph(int graph[SIZE][SIZE], int size) {
@@ -21,10 +22,28 @@ int loadGraph(const char *filename, Graph *g) {
     FILE *file = fopen(filename, "rb");
     if (file == NULL)
         return 0;
-    size_t read = fread(g, sizeof(Graph), 1, file);
+
+    // determine file size
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fclose(file);
+        return 0;
+    }
+    long fsize = ftell(file);
+    if (fsize < 0) {
+        fclose(file);
+        return 0;
+    }
+    rewind(file);
+
+    // zero the destination structure to provide safe defaults for missing fields
+    memset(g, 0, sizeof(Graph));
+
+    // read up to sizeof(Graph) bytes (backwards-compatible if file is smaller)
+    size_t to_read = (fsize < (long)sizeof(Graph)) ? (size_t)fsize : sizeof(Graph);
+    size_t read_bytes = fread((void*)g, 1, to_read, file);
     fclose(file);
 
-    return (read == 1); // 1 if the file was opened, 0 if error
+    return (read_bytes == to_read) && (to_read > 0);
 }
 
 // Just 1 "Island"
@@ -109,186 +128,197 @@ int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mo
 
 // Euler
 // undirected
-int eulerianPath(int graph[SIZE][SIZE], int size) {
-    int odd = 0;
+int hasEulerianPathUndirected(int graph[SIZE][SIZE], int size, int *startVertex) {
+    int oddCount = 0;
+    int oddVerts[2];
 
     for (int i = 0; i < size; i++) {
-        int count = 0;
-        for(int j = 0; j < size; j++) {
-            // stores the amount of vertices connected with 1
-            if (graph[i][j] == 1)
-                count++;
-        }
-        // if i has and odd number of connected vertices, increase by 1
-        if (count % 2 == 1)
-            odd++;
-    }
-
-    // if there's exactly 2 nodes of odd degree, is semi-eulerian
-    if (odd == 2)
-        return 1;
-    else 
-        return 0;
-}
-int eulerianCycle(int graph[SIZE][SIZE], int size) {
-    int odd = 0;
-
-    for (int i = 0; i < size; i++) {
-        int count = 0;
-        for(int j = 0; j < size; j++) {
-            // stores the amount of vertices connected with 1
-            if (graph[i][j] == 1)
-                count++;
-        }
-        // if i has and odd number of connected vertices, increase by 1
-        if (count % 2 == 1)
-            odd++;
-    }
-
-    if (odd > 0)
-        return 0;
-    else 
-        return 1;
-}
-int eulerianPathDirected(int graph[SIZE][SIZE], int size) { // O(n²) cost?
-    int indegree = 0, outdegree = 0;
-
-    // for each node
-    for (int v = 0; v < size; v++) {
-        int count_in = 0, count_out = 0;
-        
-        // count 1s on rows and then columns
-        for (int i = 0; i < size; i++)
-            if (graph[i][v] == 1) count_in++;
+        int degree = 0;
         for (int j = 0; j < size; j++)
-            if (graph[v][j] == 1) count_out++;
+            if (graph[i][j] == 1)
+                degree++;
 
-        // output - input is 1 => indegree = 1
-        if (count_out - count_in == 1)
-            indegree++;
-        // input - output is 1 => outdegree = 1
-        else if (count_in - count_out == 1)
-            outdegree++;
-        // all other vertices have the same out degree and in degree
-        else if (count_in != count_out)
+        if (degree % 2 == 1)
+            oddVerts[oddCount++] = i;
+    }
+
+    if (oddCount == 2) {
+        *startVertex = oddVerts[0];
+        return 1;
+    }
+
+    if (oddCount == 0) {
+        // Eulerian cycle → can start anywhere with degree > 0
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (graph[i][j] == 1) {
+                    *startVertex = i;
+                    return 1;
+                }
+            }
+        }
+        return 0; // graph has no edges
+    }
+
+    return 0; // no Eulerian path
+}
+int hasEulerianCycleUndirected(int graph[SIZE][SIZE], int size) {
+    for (int i = 0; i < size; i++) {
+        int degree = 0;
+        for (int j = 0; j < size; j++)
+            if (graph[i][j] == 1)
+                degree++;
+
+        if (degree % 2 == 1)
             return 0;
+    }
+    return 1;
+}
+int hasEulerianPathDirected(int graph[SIZE][SIZE], int size, int *startVertex) {
+    int startNodes = 0, endNodes = 0;
+    int startCandidate = -1;
 
-        // if there's more than 1 node with indegree - outdegree = 1
-        // or outdegree - indegree = 1, the graph is no semi Eulerian
-        if (indegree > 1 || outdegree > 1)
+    for (int v = 0; v < size; v++) {
+        int indeg = 0, outdeg = 0;
+
+        for (int i = 0; i < size; i++)
+            if (graph[i][v] == 1) indeg++;
+
+        for (int j = 0; j < size; j++)
+            if (graph[v][j] == 1) outdeg++;
+
+        if (outdeg - indeg == 1) {
+            startNodes++;
+            startCandidate = v;
+        }
+        else if (indeg - outdeg == 1) {
+            endNodes++;
+        }
+        else if (indeg != outdeg)
             return 0;
     }
 
-    // if the conditions are met, return true, it's semi Eulerian
-    return ( (indegree == 0 && outdegree == 0) || (indegree == 1 && outdegree == 1) );
+    if (startNodes == 1 && endNodes == 1) {
+        *startVertex = startCandidate;
+        return 1;
+    }
+
+    if (startNodes == 0 && endNodes == 0) {
+        // Eulerian cycle → start anywhere with outgoing edge
+        for (int i = 0; i < size; i++)
+            for (int j = 0; j < size; j++)
+                if (graph[i][j] == 1) {
+                    *startVertex = i;
+                    return 1;
+                }
+
+        return 0;
+    }
+
+    return 0;
 }
-int eulerianCycleDirected(int graph[SIZE][SIZE], int size) {
+int hasEulerianCycleDirected(int graph[SIZE][SIZE], int size) {
     for (int v = 0; v < size; v++) {
-        
-        int count_in = 0, count_out = 0;
-        
-        for(int i = 0; i < size; i++) {
-            if (graph[i][v] == 1)
-                count_in++;
-        }
-        
-        for(int j = 0; j < size; j++) {
-            if (graph[v][j] == 1)
-                count_out++;
-        }
-        
-        if (count_in != count_out)
+        int indeg = 0, outdeg = 0;
+
+        for (int i = 0; i < size; i++)
+            if (graph[i][v] == 1) indeg++;
+
+        for (int j = 0; j < size; j++)
+            if (graph[v][j] == 1) outdeg++;
+
+        if (indeg != outdeg)
             return 0;
     }
     return 1;
 }
 
-/*
-int main() {
-    // HAS PATH AND CYCLE
+// Hierholzer Algorithm
+void push(Stack *s, int v) {
+    s->data[++(s->top)] = v;
+}
+int pop(Stack *s) {
+    return s->data[(s->top)--];
+}
+int peek(Stack *s) {
+    return s->data[s->top];
+}
+int isEmpty(Stack *s) {
+    return s->top == -1;
+}
+
+// Hierholzer
+int hierholzer(int graph[SIZE][SIZE], int vertexCount, 
+    int startVertex, int circuit[], int isDirected) {
+    
+    // Temp Matriz
+    int tempGraph[SIZE][SIZE];
+    for (int row = 0; row < vertexCount; row++)
+        for (int col = 0; col < vertexCount; col++)
+            tempGraph[row][col] = graph[row][col];
+
+    // Stack 
+    Stack pathStack;
+    pathStack.top = -1;
+
+    // Index for Circuit List
+    int circuitIndex = 0;
+
+    // Path 
+    push(&pathStack, startVertex);
+
+    while (!isEmpty(&pathStack)) {
+
+        int currentVertex = peek(&pathStack);
+        int edgeFound = 0;
+
+        // Look for any edge of this vertex
+        for (int nextVertex = 0; nextVertex < vertexCount; nextVertex++) {
+
+            if (tempGraph[currentVertex][nextVertex] == 1) {
+                // delete edge or both in caso of being undirected
+                tempGraph[currentVertex][nextVertex] = 0;
+                if (!isDirected)
+                    tempGraph[nextVertex][currentVertex] = 0;
+
+                // Avanzar
+                push(&pathStack, nextVertex);
+
+                edgeFound = 1;
+                break;
+            }
+        }
+
+        // if there is no edge then add it to the circuit 
+        if (!edgeFound) {
+            int finishedVertex = pop(&pathStack);
+            circuit[circuitIndex++] = finishedVertex;
+        }
+    }
+
+    // Invert circuit to obtain correct order
+    for (int i = 0; i < circuitIndex / 2; i++) {
+        int temp = circuit[i];
+        circuit[i] = circuit[circuitIndex - 1 - i];
+        circuit[circuitIndex - 1 - i] = temp;
+    }
+
+    return circuitIndex;
+}
+
+/*int main() {
+    int size = 3;
     int graph[SIZE][SIZE] = {
-        {0, 1, 0, 1, 0}, 
-        {1, 0, 1, 1, 1}, 
-        {0, 1, 0, 0, 1}, 
-        {1, 1, 0, 0, 1}, 
-        {0, 1, 1, 1, 0}
+        {0,1,0},
+        {0,0,1},
+        {0,0,0},
     };
-
-    // NO PATH AND NO CYCLE
-    int graph1[SIZE][SIZE] = {
-        {0, 1, 1, 0, 0},
-        {1, 0, 1, 0, 0},
-        {1, 1, 0, 0, 0},
-        {0, 0, 0, 0, 1},
-        {0, 0, 0, 1, 0}
-    };
-
-    // HAS PATH BUT NO CYCLE
-    int graph2[SIZE][SIZE] = {
-        {0, 1, 0, 0, 0},
-        {1, 0, 1, 0, 0},
-        {0, 1, 0, 1, 0},
-        {0, 0, 1, 0, 1},
-        {0, 0, 0, 1, 0}
-    };
-
-    // DOESN'T HAVE EULER PATH
-    int graph3[SIZE][SIZE] = {
-        {0, 1, 0, 0, 0},
-        {1, 0, 1, 0, 0},
-        {0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 1},
-        {0, 0, 0, 1, 0}
-    };
-
-    int graph4[SIZE][SIZE] = {
-        {0, 1, 0, 0}, 
-        {0, 0, 1, 0}, 
-        {1, 0, 0, 0}, 
-        {0, 0, 0, 0}, 
-    };
-
-
-    int path[SIZE];
-    path[0] = 0;
-
-    printGraph(graph, 5);
-    if (eulerianPathDirected(graph, 5))
-        printf("Has euler path\n");
-    else
-        printf("No euler path\n");
-
-    if (eulerianCycleDirected(graph, 5))
-        printf("It's Eulerian Graph\n");
-    else 
-        printf("It's not Eulerian Graph\n");
-
-    if (hamiltonian(graph, path, 5, 1, 0)) {
-        printf("Hamiltonian cycle found: ");
-        // prints the cycle
-        for (int i = 0; i < 4; i++)
-            printf("%d ", path[i]);
-        printf("%d ", path[0]);
-        printf("\n");
-    } else {
-        printf("No cycle found\n");
-    }
-
-    if (hamiltonian(graph, path, 5, 0, 1)) {
-        printf("Hamiltonian path found: ");
-        // prints the cycle
-        for (int i = 0; i < 4; i++)
-            printf("%d ", path[i]);
-        printf("\n");
-    } else {
-        printf("No path found\n");
-    }
-
-    if (isConnected(graph, 5))
-        printf("It is connected\n");
-    else
-        printf("It is NOT connected\n");
-
+    int circuit[SIZE * SIZE];
+    int len = hierholzer(graph, size, 0, circuit, 1);
+    printf("Circuito Euleriano:\n");
+    for (int i = 0; i < len; i++)
+        printf("%d ", circuit[i]);
+    printf("\n");
     return 0;
 }
 */

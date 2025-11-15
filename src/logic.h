@@ -2,7 +2,15 @@
 #define GRAPH_LOGIC_H
 
 #define SIZE 12
+#include <stdio.h>
 
+// Stack
+typedef struct {
+    int data[SIZE * SIZE];
+    int top;
+} Stack;
+
+// Cell
 typedef struct {
     int row;
     int col;
@@ -20,6 +28,9 @@ typedef struct {
     int graph[SIZE][SIZE];
     Coo coords[SIZE];
     
+    int startNode;
+    int circuit[SIZE];
+
     int isConnected;
     int isDirected;
     int isEulerian;
@@ -36,9 +47,13 @@ int loadGraph(const char *filename, Graph *g);
 int promising(int graph[SIZE][SIZE], int path[SIZE], int pos);
 int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mode);
 int isConnected(int graph[SIZE][SIZE], int size);
-int eulerianCycleDirected(int graph[SIZE][SIZE], int size);
-int eulerianPathDirected(int graph[SIZE][SIZE], int size);
-int eulerianCycle(int graph[SIZE][SIZE], int size);
-int eulerianPath(int graph[SIZE][SIZE], int size);
+
+int hasEulerianPathUndirected(int graph[SIZE][SIZE], int size, int *startVertex);
+int hasEulerianCycleUndirected(int graph[SIZE][SIZE], int size);
+
+int hasEulerianPathDirected(int graph[SIZE][SIZE], int size, int *startVertex);
+int hasEulerianCycleDirected(int graph[SIZE][SIZE], int size);
+
+int hierholzer(int graph[SIZE][SIZE], int size, int start, int circuit[], int isDirected);
 
 #endif
