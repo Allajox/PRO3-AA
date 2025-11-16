@@ -48,7 +48,7 @@ int promising(int graph[SIZE][SIZE], int path[SIZE], int pos);
 int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mode);
 int isConnected(int graph[SIZE][SIZE], int size);
 
-int hasEulerianPathUndirected(int graph[SIZE][SIZE], int size, int *startVertex);
+int hasEulerianPathUndirected(int graph[SIZE][SIZE], int size);
 int hasEulerianCycleUndirected(int graph[SIZE][SIZE], int size);
 
 int hasEulerianPathDirected(int graph[SIZE][SIZE], int size, int *startVertex);

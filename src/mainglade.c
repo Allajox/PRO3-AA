@@ -9,6 +9,8 @@
 Graph currentGraph;                 // struct defined in logic.h
 int current_size = 0;               // current graph size (number of nodes)
 gboolean isValidCoo = FALSE;        // indicates if the coordinates are valid
+int hPath[SIZE];                    // stores the hamiltonian path
+int hCycle[SIZE];                   // stores the hamiltonian cycle
 
 GtkWidget ***entries = NULL;        // GtkEntry matrix (adjacency matrix)
 GtkWidget ***coo_entries = NULL;    // GtkEntry matrix for coordinates
@@ -425,14 +427,15 @@ void clear_graph_matrix(int size) {
 
 // load booleans on a struct
 void load_booleans_graph(Graph *g) {
-    int path[g->order];
-    for (int i = 0; i < g->order; i++) path[i] = -1;
+    
+    for (int i = 0; i < g->order; i++) hPath[i] = -1;
+    for (int i = 0; i < g->order; i++) hCycle[i] = -1;
 
     g->isConnected = isConnected(g->graph, g->order);
 
     // Hamiltonian cycle and path check
-    g->hasHamiltonCycle = hamiltonian(g->graph, path, g->order, 0, 0);
-    g->hasHamiltonPath = hamiltonian(g->graph, path, g->order, 0, 1);
+    g->hasHamiltonCycle = hamiltonian(g->graph, hCycle, g->order, 0, 0);
+    g->hasHamiltonPath = hamiltonian(g->graph, hPath, g->order, 0, 1);
 
     if (g->isDirected) {
         // Directed graph: use directed Eulerian functions
@@ -440,7 +443,7 @@ void load_booleans_graph(Graph *g) {
         g->isEulerian = hasEulerianCycleDirected(g->graph, g->order);
     } else {
         // Undirected graph
-        g->isSemiEulerian = hasEulerianPathUndirected(g->graph, g->order, &g->startNode);
+        g->isSemiEulerian = hasEulerianPathUndirected(g->graph, g->order);
         g->isEulerian = hasEulerianCycleUndirected(g->graph, g->order);
     }
 
@@ -956,7 +959,25 @@ void latex_builder(const char *filename, Graph *g) {
         fprintf(file, "\\end{itemize}\n");
     }
 
-    fprintf(file, "\\section{Fleury}\n");
+    if (g->hasHamiltonCycle) {
+        fprintf(file, "\\section{Hamiltonian cycle}\n");
+        for (int i = 0; i < g->order; i++)
+            fprintf(file, "%d -> ", hCycle[i] + 1);
+        fprintf(file, "%d ", hPath[0] + 1);
+        
+    }
+    
+    if (g->hasHamiltonPath) {
+        fprintf(file, "\\section{Hamiltonian path}\n");
+        for (int i = 0; i < g->order; i++) {
+            if (i != g->order - 1)
+                    fprintf(file, "%d -> ", hPath[i] + 1);
+                else
+                    fprintf(file, "%d", hPath[i] + 1);
+        }
+    }
+    
+    fprintf(file, "\\section{Fleury's algorithm}\n");
     int pathSize;
     int path[66];
     int root = findRoot(g->graph, g->order);

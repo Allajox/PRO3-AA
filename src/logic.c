@@ -134,44 +134,26 @@ int hamiltonian(int graph[SIZE][SIZE], int path[SIZE], int size, int pos, int mo
 
 // Euler
 // undirected
-int hasEulerianPathUndirected(int graph[SIZE][SIZE], int size, int *startVertex) {
-    int oddCount = 0;
-    int oddVerts[2];
+int hasEulerianPathUndirected(int graph[SIZE][SIZE], int size) {
+    int odd = 0;
 
     for (int i = 0; i < size; i++) {
-        int degree = 0;
-        for (int j = 0; j < size; j++)
+        int count = 0;
+        for(int j = 0; j < size; j++) {
+            // stores the amount of vertices connected with 1
             if (graph[i][j] == 1)
-                degree++;
-
-        if (degree % 2 == 1) {
-            if (oddCount < 2)
-                oddVerts[oddCount] = i;
-            oddCount++;
-            if (oddCount > 2)
-                return 0; // more than 2 odd-degree vertices -> not semi-eulerian
+                count++;
         }
+        // if i has and odd number of connected vertices, increase by 1
+        if (count % 2 == 1)
+            odd++;
     }
 
-    if (oddCount == 2) {
-        *startVertex = oddVerts[0];
+    // if there's exactly 2 nodes of odd degree, is semi-eulerian
+    if (odd == 2)
         return 1;
-    }
-
-    if (oddCount == 0) {
-        // Eulerian cycle → can start anywhere with degree > 0
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (graph[i][j] == 1) {
-                    *startVertex = i;
-                    return 1;
-                }
-            }
-        }
-        return 0; // graph has no edges
-    }
-
-    return 0; // no Eulerian path
+    else 
+        return 0;
 }
 int hasEulerianCycleUndirected(int graph[SIZE][SIZE], int size) {
     for (int i = 0; i < size; i++) {
