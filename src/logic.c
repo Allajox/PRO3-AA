@@ -360,19 +360,59 @@ int findRoot(int graph[SIZE][SIZE], int size) {
     } 
 }
 
+// backtracking algorithm (Depth first search)
+void dfs(int graph[SIZE][SIZE], int size, int start, int visited[]) {
+    visited[start] = 1; // marks starting node as visited
+
+    for (int i = 0; i < size; i++)
+        // if there's an edge between start and i, and i has not been visited (i == 0),
+        // go recursively to that new node
+        if (graph[start][i] == 1 && !visited[i])
+            dfs(graph, size, i, visited);
+}
+
+// uses dfs to determine if the current edge is a bridge
+int isBridge(int graph[SIZE][SIZE], int size, int current, int next) {
+    int visited[SIZE] = {0};    // stores visited nodes
+    int componentsBefore = 0, componentsAfter = 0;
+
+    // counts how many components were there before removing an edge
+    dfs(graph, size, current, visited);
+    for (int i = 0; i < size; i++)
+        componentsBefore += visited[i];
+
+    // removes edge temporarily
+    graph[current][next] = 0; 
+    graph[next][current] = 0;
+
+    // clears the array
+    for (int i = 0; i < size; i++) 
+        visited[i] = 0;
+
+    // counts the components once again after removing the edge
+    dfs(graph, size, current, visited);
+    for (int i = 0; i < size; i++)
+        componentsAfter += visited[i];
+
+    // restores the edges
+    graph[current][next] = 1;
+    graph[next][current] = 1;
+
+    return componentsAfter < componentsBefore;  // if fewer nodes reachable, it's a bridge
+}
+
 int getNextNode(int graph[SIZE][SIZE], int size, int node) {
-    for (int i = 0; i < size; i++) {   
+    for (int i = 0; i < size; i++) {
         if (graph[node][i] == 1) {
-            // avoids bridges (degree = 1)
-            if (getDegree(graph, size, i) != 1)
+            // avoids bridges
+            if (!isBridge(graph, size, node, i))
                 return i;
         }
     }
     // if all the connected nodes are bridges, choose the first encountered
-    for (int i = 0; i < size; i++) {   
-        if (graph[node][i] == 1) {
+    for (int i = 0; i < size; i++) {
+        if (graph[node][i] == 1)
             return i;
-        }
     }
     return -1;
 }

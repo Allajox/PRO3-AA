@@ -961,16 +961,22 @@ void latex_builder(const char *filename, Graph *g) {
     int path[66];
     int root = findRoot(g->graph, g->order);
 
-    if (hasEulerianCycleUndirected(g->graph, g->order))
-        printf("Available Eulerian Circuit is\n");
+    if (g->isEulerian)
+        fprintf(file, "The Eulerian cycle is: ");
 
-    else if (hasEulerianPathUndirected(g->graph, g->order, &root))
-        printf("Available Eulerian Path is\n");
+    else if (g->isSemiEulerian)
+        fprintf(file, "The Eulerian path is: ");
 
-    if (fleury(g->graph, path, g->order, &pathSize, root))
-        printPath(path, pathSize);
-    else
-        printf("Couldn't complete the eulerian path or circuit.\n");
+    if (!fleury(g->graph, path, g->order, &pathSize, root))
+        fprintf(file, "There's no solution with Fleury's algorithm.");
+    else {
+        for (int i = 0; i < pathSize; i++) {
+            if (i != pathSize - 1)                      // marks the end of the path     
+                fprintf(file, "%d -> ", path[i] + 1);   // +1 to show the correct node label
+            else
+                fprintf(file, "%d", path[i] + 1);       // if the end was reached, print only the label
+        }
+    }
 
     fprintf(file, "\\end{document}\n");
 
