@@ -54,13 +54,21 @@ int hasEulerianCycleUndirected(int graph[SIZE][SIZE], int size);
 int hasEulerianPathDirected(int graph[SIZE][SIZE], int size, int *startVertex);
 int hasEulerianCycleDirected(int graph[SIZE][SIZE], int size);
 
-int hierholzer(int graph[SIZE][SIZE], int size, int start, int circuit[], int isDirected);
+int hierholzer(int graph[SIZE][SIZE], int size, int start, int circuit[], int isDirected, int isConnected);
 
-void printPath(int path[], int pathSize);
+/*void printPath(int path[], int pathSize);
 int getDegree(int graph[SIZE][SIZE], int size, int node);
 int findRoot(int graph[SIZE][SIZE], int size);
 int getNextNode(int graph[SIZE][SIZE], int size, int node);
 int isCompleted(int graph[SIZE][SIZE], int size);
-int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root);
+int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root, int isConnected);*/
+
+int getDegree(int graph[SIZE][SIZE], int size, int node, int isDirected, int isOut);
+int findRoot(int graph[SIZE][SIZE], int size, int isDirected);
+void dfsUnified(int graph[SIZE][SIZE], int size, int start, int visited[], int isDirected);
+int isBridge(int graph[SIZE][SIZE], int size, int u, int v, int isDirected);
+int getNextNode(int graph[SIZE][SIZE], int size, int node, int isDirected);
+int isCompleted(int graph[SIZE][SIZE], int size, int isDirected);
+int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root, int isConnected, int isDirected);
 
 #endif

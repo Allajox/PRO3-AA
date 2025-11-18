@@ -449,7 +449,7 @@ void load_booleans_graph(Graph *g) {
 
     if (g->isEulerian || g->isSemiEulerian) {
         int circuit[SIZE * SIZE];
-        int len = hierholzer(g->graph, g->order, g->startNode, circuit, g->isDirected);
+        int len = hierholzer(g->graph, g->order, g->startNode, circuit, g->isDirected, g->isConnected);
         // copy up to SIZE elements into g->circuit (avoid overflow)
         for (int i = 0; i < SIZE; i++) {
             if (i < len && i < g->order) g->circuit[i] = circuit[i];
@@ -619,7 +619,6 @@ void latex_builder(const char *filename, Graph *g) {
             "\\item His most celebrated contribution is Hierholzer's algorithm, an efficient method for finding Eulerian cycles in graphs. This procedure, which begins by constructing a cycle and then expands it by joining other subcycles, is widely used in computer science, combinatorics, and optimization.\n"
         "\\end{itemize}\n"
 
-
         "\\newpage\n\n"
 
         "\\section{Théodore Fleury}\n"
@@ -781,7 +780,7 @@ void latex_builder(const char *filename, Graph *g) {
 
     // compute circuit with Hierholzer
     int circuit[SIZE * SIZE];
-    int circuit_len = hierholzer((int (*)[SIZE])g->graph, g->order, g->startNode, circuit, g->isDirected);
+    int circuit_len = hierholzer((int (*)[SIZE])g->graph, g->order, g->startNode, circuit, g->isDirected, g->isConnected);
 
     // only print a dedicated section if the graph is Eulerian (cycle) or Semi-Eulerian (path)
     if ((g->isEulerian || g->isSemiEulerian) && g->isConnected) {
@@ -980,15 +979,14 @@ void latex_builder(const char *filename, Graph *g) {
     fprintf(file, "\\section{Fleury's algorithm}\n");
     int pathSize;
     int path[66];
-    int root = findRoot(g->graph, g->order);
+    int root = findRoot(g->graph, g->order, g->isDirected);
 
     if (g->isEulerian)
         fprintf(file, "The Eulerian cycle is: ");
-
     else if (g->isSemiEulerian)
         fprintf(file, "The Eulerian path is: ");
 
-    if (!fleury(g->graph, path, g->order, &pathSize, root))
+    if (!fleury(g->graph, path, g->order, &pathSize, root, g->isConnected, g->isDirected))
         fprintf(file, "There's no solution with Fleury's algorithm.");
     else {
         for (int i = 0; i < pathSize; i++) {

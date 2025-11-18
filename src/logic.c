@@ -4,6 +4,16 @@
 #include <stdlib.h>
 #include "logic.h"
 
+// Auxiliaries
+void printPath(int path[], int pathSize) {
+    for (int i = 0; i < pathSize; i++) {
+        if (i == pathSize - 1)              // if the end was reached, print only the label
+            printf("%d", path[i] + 1);
+        else
+            printf("%d -> ", path[i] + 1);  // +1 to show the correct node label
+    }
+    printf("\n");
+}
 void printGraph(int graph[SIZE][SIZE], int size) {
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++)
@@ -167,6 +177,7 @@ int hasEulerianCycleUndirected(int graph[SIZE][SIZE], int size) {
     }
     return 1;
 }
+// directed
 int hasEulerianPathDirected(int graph[SIZE][SIZE], int size, int *startVertex) {
     int startNodes = 0, endNodes = 0;
     int startCandidate = -1;
@@ -226,7 +237,9 @@ int hasEulerianCycleDirected(int graph[SIZE][SIZE], int size) {
     return 1;
 }
 
-// Hierholzer Algorithm
+// Hierholzer Algorithm // 
+
+// Stack Methods
 void push(Stack *s, int v) {
     s->data[++(s->top)] = v;
 }
@@ -239,11 +252,13 @@ int peek(Stack *s) {
 int isEmpty(Stack *s) {
     return s->top == -1;
 }
-
 // Hierholzer
 int hierholzer(int graph[SIZE][SIZE], int vertexCount, 
-    int startVertex, int circuit[], int isDirected) {
+    int startVertex, int circuit[], int isDirected, int isConnected) {
     
+    if (!isConnected)
+        return isConnected;
+
     // Temp Matriz
     int tempGraph[SIZE][SIZE];
     for (int row = 0; row < vertexCount; row++)
@@ -269,7 +284,7 @@ int hierholzer(int graph[SIZE][SIZE], int vertexCount,
         for (int nextVertex = 0; nextVertex < vertexCount; nextVertex++) {
 
             if (tempGraph[currentVertex][nextVertex] == 1) {
-                // delete edge or both in caso of being undirected
+                // delete edge or both in case of being undirected
                 tempGraph[currentVertex][nextVertex] = 0;
                 if (!isDirected)
                     tempGraph[nextVertex][currentVertex] = 0;
@@ -299,24 +314,190 @@ int hierholzer(int graph[SIZE][SIZE], int vertexCount,
     return circuitIndex;
 }
 
-void printPath(int path[], int pathSize) {
-    for (int i = 0; i < pathSize; i++) {
-        if (i == pathSize - 1)              // if the end was reached, print only the label
-            printf("%d", path[i] + 1);
-        else
-            printf("%d -> ", path[i] + 1);  // +1 to show the correct node label
+// Fleury Algorithm // 
+
+int getDegree(int graph[SIZE][SIZE], int size, int node, int isDirected, int isOut) {
+    int deg = 0;
+
+    if (!isDirected) {
+        // No dirigido: grado es normal
+        for (int j = 0; j < size; j++)
+            if (graph[node][j] == 1) deg++;
+    } 
+    else {
+        // Dirigido: elegir outdegree o indegree
+        if (isOut) {
+            for (int j = 0; j < size; j++)
+                if (graph[node][j] == 1) deg++;
+        } else {
+            for (int i = 0; i < size; i++)
+                if (graph[i][node] == 1) deg++;
+        }
     }
-    printf("\n");
+
+    return deg;
+}
+int findRoot(int graph[SIZE][SIZE], int size, int isDirected) {
+
+    if (!isDirected) {
+        // === CASO NO DIRIGIDO ===
+        int odd = 0, lastOdd = 0;
+        for (int i = 0; i < size; i++) {
+            if (getDegree(graph, size, i, 0, 1) % 2 != 0) {
+                odd++;
+                lastOdd = i;
+            }
+        }
+        if (odd == 0) return 0;
+        if (odd == 2) return lastOdd;
+        return -1;
+    }
+
+    // === CASO DIRIGIDO ===
+    int start = -1, end = -1;
+
+    for (int i = 0; i < size; i++) {
+        int out = getDegree(graph, size, i, 1, 1);
+        int in  = getDegree(graph, size, i, 1, 0);
+
+        if (out - in == 1) {
+            if (start == -1) start = i;
+            else return -1;
+        } 
+        else if (in - out == 1) {
+            if (end == -1) end = i;
+            else return -1;
+        } 
+        else if (in != out)
+            return -1;
+    }
+
+    if (start != -1) return start;
+    return 0;
+}
+void dfs (int graph[SIZE][SIZE], int size, int start, int visited[], int isDirected) {
+    visited[start] = 1;
+
+    for (int i = 0; i < size; i++) {
+        if (visited[i]) continue;
+
+        if (isDirected) {
+            if (graph[start][i] == 1)
+                dfs(graph, size, i, visited, isDirected);
+        } else {
+            if (graph[start][i] == 1 || graph[i][start] == 1)
+                dfs(graph, size, i, visited, isDirected);
+        }
+    }
+}
+// helper: returns 1 if node has any incident edge (outgoing or incoming for directed)
+int nodeHasEdges(int graph[SIZE][SIZE], int size, int node, int isDirected) {
+    if (!isDirected) {
+        for (int j = 0; j < size; j++)
+            if (graph[node][j] == 1)
+                return 1;
+        return 0;
+    }
+
+    for (int j = 0; j < size; j++) {
+        if (graph[node][j] == 1) return 1;
+        if (graph[j][node] == 1) return 1;
+    }
+    return 0;
 }
 
-int getDegree(int graph[SIZE][SIZE], int size, int node) {
+// helper: count reachable vertices from `start` that still have at least one incident edge
+int countReachableNodesWithEdges(int graph[SIZE][SIZE], int size, int start, int isDirected) {
+    int visited[SIZE] = {0};
+    int cnt = 0;
+    dfs(graph, size, start, visited, isDirected);
+    for (int i = 0; i < size; i++)
+        if (visited[i] && nodeHasEdges(graph, size, i, isDirected))
+            cnt++;
+    return cnt;
+}
+int isBridge(int graph[SIZE][SIZE], int size, int u, int v, int isDirected) {
+    // If the edge is the only outgoing edge from u, it's forced (must take it)
+    int outdeg = getDegree(graph, size, u, isDirected, 1);
+    if (outdeg == 1)
+        return 0; // not a bridge for Fleury's choice
+    // For undirected graphs test reachability from u (original behaviour).
+    // For directed graphs we must test reachability from v (the vertex we'll move to),
+    // because after taking the edge u->v we will be at v and need to reach remaining edges.
+    int startNode = isDirected ? v : u;
+
+    // Count reachable vertices that still have incident edges before removal
+    int before = countReachableNodesWithEdges(graph, size, startNode, isDirected);
+
+    // remove edge temporarily
+    graph[u][v] = 0;
+    if (!isDirected) graph[v][u] = 0;
+
+    int after = countReachableNodesWithEdges(graph, size, startNode, isDirected);
+
+    // restore edge
+    graph[u][v] = 1;
+    if (!isDirected) graph[v][u] = 1;
+
+    return (after < before);
+}
+int getNextNode(int graph[SIZE][SIZE], int size, int node, int isDirected) {
+
+    for (int j = 0; j < size; j++) {
+        if (graph[node][j] == 1) {
+            if (!isBridge (graph, size, node, j, isDirected))
+                return j;
+        }
+    }
+
+    for (int j = 0; j < size; j++)
+        if (graph[node][j] == 1)
+            return j;
+
+    return -1;
+}
+int isCompleted(int graph[SIZE][SIZE], int size, int isDirected) {
+    for (int i = 0; i < size; i++)
+        if (getDegree(graph, size, i, isDirected, 1) > 0)
+            return 0;
+    return 1;
+}
+int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root, int isConnected, int isDirected) {
+
+    if (!isConnected) return 0;
+
+    int current = root;
+    path[0] = current;
+    *pathSize = 1;
+
+    for (;;) {
+        int next = getNextNode (graph, size, current, isDirected);
+
+        if (next == -1) break;
+
+        path[*pathSize] = next;
+        (*pathSize)++;
+
+        // remove edge
+        graph[current][next] = 0;
+        if (!isDirected) graph[next][current] = 0;
+
+        current = next;
+
+        if (isCompleted (graph, size, isDirected))
+            return 1;
+    }
+
+    return isCompleted (graph, size, isDirected);
+}
+
+/*int getDegree(int graph[SIZE][SIZE], int size, int node) {
     int deg = 0;
     for (int j = 0; j < size; j++) {
         if (graph[node][j] == 1) deg++; 
     }
     return deg;
 }
-
 int findRoot(int graph[SIZE][SIZE], int size) {
     int lastOdd = 0; // start from the first node
     int oddCount = 0;
@@ -341,9 +522,8 @@ int findRoot(int graph[SIZE][SIZE], int size) {
         return rand() % size;
     } 
 }
-
-// backtracking algorithm (Depth first search)
 void dfs(int graph[SIZE][SIZE], int size, int start, int visited[]) {
+// backtracking algorithm (Depth first search)
     visited[start] = 1; // marks starting node as visited
 
     for (int i = 0; i < size; i++)
@@ -352,9 +532,8 @@ void dfs(int graph[SIZE][SIZE], int size, int start, int visited[]) {
         if (graph[start][i] == 1 && !visited[i])
             dfs(graph, size, i, visited);
 }
-
-// uses dfs to determine if the current edge is a bridge
 int isBridge(int graph[SIZE][SIZE], int size, int current, int next) {
+// uses dfs to determine if the current edge is a bridge
     int visited[SIZE] = {0};    // stores visited nodes
     int componentsBefore = 0, componentsAfter = 0;
 
@@ -382,7 +561,6 @@ int isBridge(int graph[SIZE][SIZE], int size, int current, int next) {
 
     return componentsAfter < componentsBefore;  // if fewer nodes reachable, it's a bridge
 }
-
 int getNextNode(int graph[SIZE][SIZE], int size, int node) {
     for (int i = 0; i < size; i++) {
         if (graph[node][i] == 1) {
@@ -398,18 +576,19 @@ int getNextNode(int graph[SIZE][SIZE], int size, int node) {
     }
     return -1;
 }
-
-// determines if the graph has no more edges
 int isCompleted(int graph[SIZE][SIZE], int size) {
+// determines if the graph has no more edges
     for (int i = 0; i < size; i++) {
         if (getDegree(graph, size, i) > 0)
             return 0;
     }
     return 1;
 }
+// Fleury
+int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root, int isConnected) {   
+    if (!isConnected)
+        return isConnected;
 
-// main algorithm
-int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root) {   
     path[0] = root;
     int current = root;
     *pathSize = 1;
@@ -441,6 +620,11 @@ int fleury(int graph[SIZE][SIZE], int path[], int size, int *pathSize, int root)
     }
     return (isCompleted(graph, size));
 }
+
+*/
+
+
+
 
 /*int main() {
     int size = 3;
