@@ -607,33 +607,6 @@ void latex_builder(const char *filename, Graph *g) {
             "\\caption{Eulerian cycle}"
         "\\end{figure}\n"
 
-        "\\newpage\n"
-        "\\section{Carl Hierholzer}\n"
-        "\\begin{figure}[h]\n"
-            "\\centering\n"
-            "\\includegraphics[width=0.3\\textwidth]{.IMG/Hierholzer.png}\n"
-        "\\end{figure}\n"
-        "\\begin{itemize}\n"
-            "\\item He was a 19th-century German mathematician, renowned for his contributions to graph theory, especially his work on paths in Eulerian graphs. Despite not having a long career due to his early death, his work left a lasting mark on mathematics.\n"
-            "\\item Hierholzer is primarily known for formally proving that a connected graph has an Eulerian cycle if and only if all its vertices have even degree. This result, although based on earlier ideas by Euler, provided a clearer and more complete formulation within the emerging field of graph theory.\n"
-            "\\item His most celebrated contribution is Hierholzer's algorithm, an efficient method for finding Eulerian cycles in graphs. This procedure, which begins by constructing a cycle and then expands it by joining other subcycles, is widely used in computer science, combinatorics, and optimization.\n"
-        "\\end{itemize}\n"
-
-        "\\newpage\n\n"
-
-        "\\section{Théodore Fleury}\n"
-
-        "\\begin{itemize}\n"
-            "\\item He was a 19th-century French mathematician, known for his contributions to graph theory at a time when this discipline was just beginning to be formalized. Although not as widely mentioned as other mathematicians of his time, his work is fundamental to the study of Eulerian paths.\n"
-            "\\item Fleury is especially remembered for developing a practical method for constructing Eulerian cycles and paths in graphs. His algorithm, known as Fleury's algorithm, offers an intuitive way to traverse a graph by visiting each edge exactly once without getting stuck, avoiding the removal of edges that break the graph's connectivity.\n"
-            "\\item This algorithm is based on a simple but powerful idea: always select an edge that is not a \\\"bridge\\\"—unless there is no other option—thus guaranteeing the continuity of the path. His approach helped establish basic principles for the systematic solution of Eulerian problems.\n"
-            "\\item Although his historical figure is not as well documented as that of other mathematicians, Fleury's method continues to be taught in courses on algorithms, data structures, and graph theory. His contribution is considered a key piece in the evolution of techniques for finding Eulerian paths and cycles in graphs.\n"
-        "\\end{itemize}\n"
-        "\\begin{figure}[h]\n"
-            "\\centering\n"
-            "\\includegraphics[width=0.6\\textwidth]{.IMG/Fleury.png}\n"
-            "\\caption{Fleury's Journal}\n"
-        "\\end{figure}\n"
 
         "\\newpage\n\n"
 
@@ -776,124 +749,10 @@ void latex_builder(const char *filename, Graph *g) {
         "\\end{adjustbox}\n"
     );
 
-    // ======================================================= HIERHOLZER'S PATH / CYCLE =======================================================
-
-    // compute circuit with Hierholzer
-    int circuit[SIZE * SIZE];
-    int circuit_len = hierholzer((int (*)[SIZE])g->graph, g->order, g->startNode, circuit, g->isDirected, g->isConnected);
-
-    // only print a dedicated section if the graph is Eulerian (cycle) or Semi-Eulerian (path)
-    if ((g->isEulerian || g->isSemiEulerian) && g->isConnected) {
-        if (g->isEulerian)
-            fprintf(file, "\\section{Eulerian cycle (Eulerian)}\n");
-        else
-            fprintf(file, "\\section{Hierholzer path (Semi-Eulerian)}\n");
-
-        fprintf(file,
-            "\\begin{adjustbox}{max width = \\textwidth, max height = \\textheight}\n"
-            "\\begin{tikzpicture}[\n"
-            "NotDirectedEven/.style={circle, draw=black, fill=white, very thick, minimum size=8mm},\n"
-            "NotDirectedOdd/.style={circle, draw=black, fill=black, very thick, minimum size=8mm, text=white},\n"
-            "DirectedEvenInEvenOut/.style={circle, draw=red!80!black, fill=red!30, very thick, minimum size=8mm},\n"
-            "DirectedEvenInOddOut/.style={circle, draw=violet!80!black, fill=violet!40, very thick, minimum size=8mm},\n"
-            "DirectedOddInEvenOut/.style={circle, draw=purple!80!black, fill=purple!40, very thick, minimum size=8mm, text=white},\n"
-            "DirectedOddInOddOut/.style={circle, draw=blue!80!black, fill=blue!40, very thick, minimum size=8mm, text=white}\n"
-            "]\n"
-        );
-
-        // compute degrees based only on circuit edges
-        int indeg[SIZE] = {0}, outdeg[SIZE] = {0}, deg[SIZE] = {0};
-        if (circuit_len > 1) {
-            for (int i = 0; i < circuit_len - 1; i++) {
-                int a = circuit[i];
-                int b = circuit[i+1];
-                if (a < 0 || a >= g->order || b < 0 || b >= g->order) continue;
-                if (g->isDirected) {
-                    outdeg[a]++;
-                    indeg[b]++;
-                } else {
-                    deg[a]++;
-                    deg[b]++;
-                }
-            }
-            // if it's an Eulerian cycle and the circuit does not explicitly close, close it
-            if (g->isEulerian && circuit_len > 0) {
-                int first = circuit[0];
-                int last = circuit[circuit_len - 1];
-                if (first != last) {
-                    if (g->isDirected) { outdeg[last]++; indeg[first]++; }
-                    else { deg[first]++; deg[last]++; }
-                }
-            }
-        }
-
-        // draw nodes using degrees from the circuit
-        fprintf(file, "%% === NODOS (hierholzer) === \n");
-        for (int i = 0; i < g->order; i++) {
-            int x = g->coords[i].x;
-            int y = g->coords[i].y;
-            if (g->isDirected) {
-                int id = indeg[i];
-                int od = outdeg[i];
-                if (id % 2 == 0 && od % 2 == 0)
-                    fprintf(file, "\\node[DirectedEvenInEvenOut] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
-                else if (id % 2 == 0 && od % 2 != 0)
-                    fprintf(file, "\\node[DirectedEvenInOddOut] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
-                else if (id % 2 != 0 && od % 2 == 0)
-                    fprintf(file, "\\node[DirectedOddInEvenOut] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
-                else
-                    fprintf(file, "\\node[DirectedOddInOddOut] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
-            } else {
-                int d = deg[i];
-                if (d % 2 == 0)
-                    fprintf(file, "\\node[NotDirectedEven] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
-                else
-                    fprintf(file, "\\node[NotDirectedOdd] (N%d) at (%d,%d) {%d};\\n", i+1, x, y, i+1);
-            }
-        }
-
-        // draw only edges present in the circuit
-        fprintf(file, "%% === ARISTAS (hierholzer) === \n");
-        if (circuit_len > 1) {
-            for (int i = 0; i < circuit_len - 1; i++) {
-                int a = circuit[i];
-                int b = circuit[i+1];
-                if (a < 0 || a >= g->order || b < 0 || b >= g->order) continue;
-                if (g->isDirected)
-                    fprintf(file, "\\draw[->, very thick, red] (N%d) -- (N%d);\\n", a+1, b+1);
-                else
-                    fprintf(file, "\\draw[--, very thick, red] (N%d) -- (N%d);\\n", a+1, b+1);
-            }
-            if (g->isEulerian) {
-                int first = circuit[0];
-                int last = circuit[circuit_len - 1];
-                if (first != last && first >=0 && first < g->order && last >=0 && last < g->order) {
-                    if (g->isDirected)
-                        fprintf(file, "\\draw[->, very thick, red] (N%d) -- (N%d);\\n", last+1, first+1);
-                    else
-                        fprintf(file, "\\draw[--, very thick, red] (N%d) -- (N%d);\\n", last+1, first+1);
-                }
-            }
-        }
-
-        // show degrees derived from the circuit
-        fprintf(file, "\\end{tikzpicture}\\end{adjustbox}\\n");
-
-        fprintf(file, "\\subsection{Degrees in the circuit}\\n\\begin{itemize}\\n");
-        for (int i = 0; i < g->order; i++) {
-            if (g->isDirected)
-                fprintf(file, "\\item Node %d: indeg=%d, outdeg=%d.\\\\\n", i+1, indeg[i], outdeg[i]);
-            else
-                fprintf(file, "\\item Node %d: degree=%d.\\\\\n", i+1, deg[i]);
-        }
-        fprintf(file, "\\end{itemize}\\n");
-    }
-
     // ======================================================= GRAPH'S PROPERTIES =======================================================
     
     // Properties
-    fprintf(file,"\\newpage\n"
-        "\\section{Graph properties}\n"
+    fprintf(file, "\\section{Graph properties}\n"
     );
 
     if (g->isConnected) {
@@ -975,20 +834,66 @@ void latex_builder(const char *filename, Graph *g) {
                     fprintf(file, "%d", hPath[i] + 1);
         }
     }
+
+    fprintf(file, "\\newpage\n"
+        "\\section{Carl Hierholzer}\n"
+        "\\begin{figure}[h]\n"
+            "\\centering\n"
+            "\\includegraphics[width=0.3\\textwidth]{.IMG/Hierholzer.png}\n"
+        "\\end{figure}\n"
+        "\\begin{itemize}\n"
+            "\\item He was a 19th-century German mathematician, renowned for his contributions to graph theory, especially his work on Eulerian graphs.\n"
+            "\\item Hierholzer is primarily known for formally proving that a connected graph has an Eulerian cycle if and only if all its vertices have even degree. This result, although based on earlier ideas by Euler, provided a clearer and more complete formulation within the emerging field of graph theory.\n"
+            "\\item His most celebrated contribution is Hierholzer's algorithm, an efficient method for finding Eulerian cycles in graphs. This procedure, which begins by constructing a cycle and then expands it by joining other subcycles, is widely used in computer science, combinatorics, and optimization.\n"
+        "\\end{itemize}\n");
+
+    // ======================================================= HIERHOLZER'S PATH / CYCLE =======================================================
+
+    // compute circuit with Hierholzer
+    int circuit[SIZE * SIZE];
+    int circuit_len = hierholzer((int (*)[SIZE])g->graph, g->order, g->startNode, circuit, g->isDirected, g->isConnected);
+
+    fprintf(file, "\\section{Hielholzer's algorithm}\n");
+    // only print a dedicated section if the graph is Eulerian (cycle)
+    if (g->isEulerian && g->isConnected) {
+        fprintf(file, "The Eulerian cycle is: ");
+        for (int i = 0; i < circuit_len; i++) {
+            if (i != circuit_len - 1)                      // marks the end of the path     
+                fprintf(file, "%d -> ", circuit[i] + 1);   // +1 to show the correct node label
+            else
+                fprintf(file, "%d", circuit[i] + 1);       // if the end was reached, print only the label
+            }
+    }
+    else 
+        fprintf(file, "The graph is not Eulerian, so there's no solution.\n");
+
+    fprintf(file, "\\section{Théodore Fleury}\n"
+
+        "\\begin{itemize}\n"
+            "\\item He was a 19th-century French mathematician, known for his contributions to graph theory at a time when this discipline was just beginning to be formalized. Although not as widely mentioned as other mathematicians of his time, his work is fundamental to the study of Eulerian paths.\n"
+            "\\item Fleury is especially remembered for developing a practical method for constructing Eulerian cycles and paths in graphs. His algorithm, known as Fleury's algorithm, offers an intuitive way to traverse a graph by visiting each edge exactly once without getting stuck, avoiding the removal of edges that break the graph's connectivity.\n"
+            "\\item This algorithm is based on a simple but powerful idea: always select an edge that is not a \\\"bridge\\\"—unless there is no other option—thus guaranteeing the continuity of the path. His approach helped establish basic principles for the systematic solution of Eulerian problems.\n"
+            "\\item Although his historical figure is not as well documented as that of other mathematicians, Fleury's method continues to be taught in courses on algorithms, data structures, and graph theory. His contribution is considered a key piece in the evolution of techniques for finding Eulerian paths and cycles in graphs.\n"
+        "\\end{itemize}\n"
+        "\\begin{figure}[h]\n"
+            "\\centering\n"
+            "\\includegraphics[width=0.4\\textwidth]{.IMG/Fleury.png}\n"
+            "\\caption{Fleury's Journal}\n"
+        "\\end{figure}\n");
     
     fprintf(file, "\\section{Fleury's algorithm}\n");
     int pathSize;
     int path[66];
     int root = findRoot(g->graph, g->order, g->isDirected);
 
-    if (g->isEulerian)
-        fprintf(file, "The Eulerian cycle is: ");
-    else if (g->isSemiEulerian)
-        fprintf(file, "The Eulerian path is: ");
-
     if (!fleury(g->graph, path, g->order, &pathSize, root, g->isConnected, g->isDirected))
-        fprintf(file, "There's no solution with Fleury's algorithm.");
+        fprintf(file, "The graph is not Eulerian, so there's no solution.");
     else {
+        if (g->isEulerian)
+            fprintf(file, "The Eulerian cycle is: ");
+        else if (g->isSemiEulerian)
+            fprintf(file, "The Eulerian path is: ");
+
         for (int i = 0; i < pathSize; i++) {
             if (i != pathSize - 1)                      // marks the end of the path     
                 fprintf(file, "%d -> ", path[i] + 1);   // +1 to show the correct node label
