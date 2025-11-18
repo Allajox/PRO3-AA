@@ -818,7 +818,8 @@ void latex_builder(const char *filename, Graph *g) {
     }
 
     if (g->hasHamiltonCycle) {
-        fprintf(file, "\\section{Hamiltonian cycle}\n");
+        fprintf(file, "\\section{Hamiltonian cycle}\n"
+            "\\\\The found cycle is: ");
         for (int i = 0; i < g->order; i++)
             fprintf(file, "%d -> ", hCycle[i] + 1);
         fprintf(file, "%d ", hPath[0] + 1);
@@ -826,7 +827,8 @@ void latex_builder(const char *filename, Graph *g) {
     }
     
     if (g->hasHamiltonPath) {
-        fprintf(file, "\\section{Hamiltonian path}\n");
+        fprintf(file, "\\section{Hamiltonian path}\n"
+            "\\\\The found path is: ");
         for (int i = 0; i < g->order; i++) {
             if (i != g->order - 1)
                     fprintf(file, "%d -> ", hPath[i] + 1);
@@ -887,18 +889,41 @@ void latex_builder(const char *filename, Graph *g) {
     int root = findRoot(g->graph, g->order, g->isDirected);
 
     if (!fleury(g->graph, path, g->order, &pathSize, root, g->isConnected, g->isDirected))
-        fprintf(file, "The graph is not Eulerian, so there's no solution.");
+        fprintf(file, "The graph is not Eulerian or semi-Eulerian, so there's no solution.");
     else {
-        if (g->isEulerian)
-            fprintf(file, "The Eulerian cycle is: ");
-        else if (g->isSemiEulerian)
-            fprintf(file, "The Eulerian path is: ");
+        if (!g->isDirected) {
+            if (g->isEulerian)
+                fprintf(file, "The found Eulerian cycle is: ");
+            else if (g->isSemiEulerian)
+                fprintf(file, "The found Eulerian path is: ");
 
-        for (int i = 0; i < pathSize; i++) {
-            if (i != pathSize - 1)                      // marks the end of the path     
-                fprintf(file, "%d -> ", path[i] + 1);   // +1 to show the correct node label
-            else
-                fprintf(file, "%d", path[i] + 1);       // if the end was reached, print only the label
+            for (int i = 0; i < pathSize; i++) {
+                if (i != pathSize - 1)                      // marks the end of the path     
+                    fprintf(file, "%d -> ", path[i] + 1);   // +1 to show the correct node label
+                else
+                    fprintf(file, "%d", path[i] + 1);       // if the end was reached, print only the label
+            }
+        }
+        
+        // THIS IS INCREDIBLY INEFFICIENT, IT'S 9:30 PM AND WE ARE TIRED BOSS
+        else {
+            fprintf(file, "The found Eulerian cycle is: ");
+            for (int i = 0; i < pathSize; i++) {
+                if (i != pathSize - 1)                      // marks the end of the path     
+                    fprintf(file, "%d -> ", path[i] + 1);   // +1 to show the correct node label
+                else
+                    fprintf(file, "%d", path[i] + 1);       // if the end was reached, print only the label
+        }
+        
+        if (g->isSemiEulerian) {
+            fprintf(file, "\\\\The found Eulerian path is: ");
+            for (int i = 0; i < pathSize - 1; i++) {
+                if (i != pathSize - 2)                      // marks the end of the path     
+                    fprintf(file, "%d -> ", path[i] + 1);   // +1 to show the correct node label
+                else
+                    fprintf(file, "%d", path[i] + 1);
+                }
+            } 
         }
     }
 
